@@ -90,4 +90,4 @@ async def token(username: str, password: str, db: AsyncSession):
         )
     access_token = create_token({"sub": str(user.id)})
 
-    return {"token": access_token}
+    return {"access_token": access_token, "token_type": "bearer"}

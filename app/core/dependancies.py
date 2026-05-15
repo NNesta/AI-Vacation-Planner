@@ -9,7 +9,7 @@ from app.services.auth import verify_token
 from ..db.session import DbSession
 
 
-oauth2_schemas = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+oauth2_schemas = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 
 async def get_current_user(

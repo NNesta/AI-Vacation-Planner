@@ -4,6 +4,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.dependancies import CurrentUser
 from app.db.session import DbSession
+from app.schemas.user.user_response import UserResponse
+from app.schemas.user.user_safe_response import UserSafeResponse
 
 from ...schemas.auth import auth_request, auth_response
 from ...services import auth_services
@@ -30,6 +32,6 @@ async def login(
     )
 
 
-@router.get("/me", response_model=str)
+@router.get("/me", response_model=UserSafeResponse)
 async def me(current_user: CurrentUser):
     return current_user

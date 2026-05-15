@@ -5,3 +5,4 @@ from .trip_safe_response import TripSafeResponse
 
 class TripResponse(TripSafeResponse):
     users: List[UserSafeResponse]
+    creator: UserSafeResponse

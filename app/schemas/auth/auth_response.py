@@ -3,8 +3,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class LoginResponse(BaseModel):
 
-    token: str
-    token_type: str = "jwt"
+    access_token: str
+    token_type: str
 
 
 class RegisterUserResponse(BaseModel):

@@ -5,6 +5,10 @@ from app.models.users import User
 
 
 async def get_users(db: AsyncSession):
-    result = await db.execute(select(User).options(selectinload(User.trips)))
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.trips))
+        .options(selectinload(User.created_trips))
+    )
     users = result.scalars().all()
     return users

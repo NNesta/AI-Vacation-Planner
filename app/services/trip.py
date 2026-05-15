@@ -21,7 +21,11 @@ async def create_trip(trip_data: trip_request.CreateTripRequest, db: AsyncSessio
 
 
 async def get_trips(db: AsyncSession):
-    result = await db.execute(select(Trip).options(selectinload(Trip.users)))
+    result = await db.execute(
+        select(Trip)
+        .options(selectinload(Trip.users))
+        .options(selectinload(Trip.creator))
+    )
     trips = result.scalars().all()
     return trips
 

@@ -37,5 +37,5 @@ class User(Base):
         "Trip", secondary=user_trip_associations, back_populates="users"
     )
     created_trips: Mapped[List["Trip"]] = relationship(
-        "Trip", back_populates="users", cascade="all, delete-orphan"
+        "Trip", back_populates="creator", cascade="all, delete-orphan"
     )
