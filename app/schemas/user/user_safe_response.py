@@ -1,18 +1,14 @@
-from enum import Enum
-from pydantic import ConfigDict, Field, EmailStr
-from .user_request import BaseUser
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from app.enums.user_role_enum import UserRole
+from uuid import UUID
 
 
-class UserRole(str, Enum):
-    USER = "USER"
-    ADMIN = "ADMIN"
-    MANAGER = "MANAGER"
+class UserSafeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-
-class UserSafeResponse(BaseUser):
+    id: UUID
     username: str = Field(min_length=1, max_length=50)
     email: EmailStr = Field(min_length=1, max_length=150)
     firstname: str = Field(min_length=1, max_length=150)
     lastname: str = Field(min_length=1, max_length=150)
-    role: str = Field(default=UserRole.USER)
-    model_config = ConfigDict(from_attributes=True)
+    role: UserRole = Field(default=UserRole.USER)

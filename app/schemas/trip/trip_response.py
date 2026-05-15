@@ -1,8 +1,18 @@
-from typing import List, Optional
-from app.schemas.user.user_response import UserSafeResponse
-from .trip_safe_response import TripSafeResponse
+from typing import List
+from decimal import Decimal
+from uuid import UUID
+from pydantic import BaseModel, Field
+from app.enums.trip_budget_enum import TripStyle
+from app.schemas.user.user_safe_response import UserSafeResponse
 
 
-class TripResponse(TripSafeResponse):
+class TripResponse(BaseModel):
+    id: UUID
+    destination: str = Field(min_length=2, max_length=200)
+    days: int = Field(default=1, ge=0, le=50)
+    budget: Decimal = Field(
+        default=Decimal("1.00"), ge=0, le=1_000_000, decimal_places=2
+    )
+    trip_style: TripStyle = Field(default=TripStyle.BUDGET)
     users: List[UserSafeResponse]
     creator: UserSafeResponse

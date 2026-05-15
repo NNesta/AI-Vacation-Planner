@@ -1,20 +1,8 @@
 from decimal import Decimal
-from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
 
-
-class TripStyle(str, Enum):
-    BUDGET = "BUDGET"
-
-
-class TripBase(BaseModel):
-    destination: str = Field(min_length=2, max_length=200)
-    days: int = Field(default=1, ge=0, le=50)
-    budget: Decimal = Field(
-        default=Decimal("1.00"), ge=0, le=1_000_000, decimal_places=2
-    )
-    trip_style: TripStyle = Field(default=TripStyle.BUDGET)
+from app.enums.trip_budget_enum import TripStyle
 
 
 class UpdateTripRequest(BaseModel):
@@ -26,5 +14,10 @@ class UpdateTripRequest(BaseModel):
     trip_style: Optional[TripStyle] = None
 
 
-class CreateTripRequest(TripBase):
-    pass
+class CreateTripRequest(BaseModel):
+    destination: str = Field(min_length=2, max_length=200)
+    days: int = Field(default=1, ge=0, le=50)
+    budget: Decimal = Field(
+        default=Decimal("1.00"), ge=0, le=1_000_000, decimal_places=2
+    )
+    trip_style: TripStyle = Field(default=TripStyle.BUDGET)

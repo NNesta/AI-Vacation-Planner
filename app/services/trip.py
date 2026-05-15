@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.trips import Trip
+from app.models.users import User
 from ..schemas.trip import trip_request
 
 
@@ -41,7 +42,10 @@ async def get_trip(trip_id: UUID, db: AsyncSession):
 
 
 async def update_trip(
-    trip_id: UUID, update_data: trip_request.UpdateTripRequest, db: AsyncSession
+    trip_id: UUID,
+    trip_data: trip_request.UpdateTripRequest,
+    current_user: User,
+    db: AsyncSession,
 ):
     result = await db.execute(select(Trip).where(Trip.id == trip_id))
     trip = result.scalar_one_or_none()
@@ -49,6 +53,18 @@ async def update_trip(
         raise HTTPException(
             detail="Trip not found", status_code=status.HTTP_404_NOT_FOUND
         )
+    if trip.creator_id != current_user.id:
+        raise HTTPException(
+            detail="Not allowed to update this trip",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    update_data = trip_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(trip, field, value)
+    await db.commit()
+    await db.refresh(trip)
+    return trip
 
 
 async def delete_trip(trip_id: UUID, db: AsyncSession):
