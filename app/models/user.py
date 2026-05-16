@@ -8,7 +8,7 @@ from typing import List, TYPE_CHECKING
 import enum
 
 if TYPE_CHECKING:
-    from .trips import Trip
+    from .trip import Trip
 
 
 class Role(enum.Enum):

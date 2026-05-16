@@ -1,2 +1,4 @@
-from .users import User
-from .trips import Trip
+from .user import User
+from .trip import Trip
+from .activity import Activity
+from .itinerary_day import ItineraryDay

@@ -2,11 +2,14 @@ import uuid
 from sqlalchemy import UUID, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .user_trips import user_trip_associations
-from .users import User
+from .user import User
 
 from ..db.base import Base
 import enum
-from typing import List
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.itinerary_day import ItineraryDay
 
 
 class TripStyle(enum.Enum):
@@ -33,3 +36,6 @@ class Trip(Base):
         "User", secondary=user_trip_associations, back_populates="trips"
     )
     creator: Mapped[User] = relationship("User", back_populates="created_trips")
+    itinerary_days: Mapped[List["ItineraryDay"]] = relationship(
+        "ItineraryDay", back_populates="trip", cascade="all, delete-orphan"
+    )
