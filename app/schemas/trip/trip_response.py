@@ -2,7 +2,9 @@ from typing import List
 from decimal import Decimal
 from uuid import UUID
 from pydantic import BaseModel, Field
+from app.api.v1 import itineraries
 from app.enums.trip_budget_enum import TripStyle
+from app.schemas.itinerary.itinerary_response import ItineraryDay
 from app.schemas.user.user_safe_response import UserSafeResponse
 
 
@@ -16,3 +18,4 @@ class TripResponse(BaseModel):
     trip_style: TripStyle = Field(default=TripStyle.BUDGET)
     users: List[UserSafeResponse]
     creator: UserSafeResponse
+    itinerary_days: List[ItineraryDay]

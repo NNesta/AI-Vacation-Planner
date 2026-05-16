@@ -3,8 +3,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.models.trips import Trip
-from app.models.users import User
+from app.models.trip import Trip
+from app.models.user import User
 from ..schemas.trip import trip_request
 
 
@@ -26,6 +26,7 @@ async def get_trips(db: AsyncSession):
         select(Trip)
         .options(selectinload(Trip.users))
         .options(selectinload(Trip.creator))
+        .options(selectinload(Trip.itinerary_days))
     )
     trips = result.scalars().all()
     return trips

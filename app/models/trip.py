@@ -37,5 +37,8 @@ class Trip(Base):
     )
     creator: Mapped[User] = relationship("User", back_populates="created_trips")
     itinerary_days: Mapped[List["ItineraryDay"]] = relationship(
-        "ItineraryDay", back_populates="trip", cascade="all, delete-orphan"
+        "ItineraryDay",
+        back_populates="trip",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )

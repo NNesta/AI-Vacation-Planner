@@ -1,8 +1,7 @@
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
-
-from app.models.trips import TripStyle
+from app.models.trip import TripStyle
 
 
 class TripSafeResponse(BaseModel):

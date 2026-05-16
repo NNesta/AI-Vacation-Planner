@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 import jwt
 from app.core.config import settings
-from app.models.users import User
+from app.models.user import User
 from ..schemas.auth import auth_request
 
 hash_password = PasswordHash.recommended()

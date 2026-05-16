@@ -21,6 +21,9 @@ class ItineraryDay(Base):
     )
     day_number: Mapped[int]
     activities: Mapped[List["Activity"]] = relationship(
-        "Activity", back_populates="itinerary_day", cascade="all, delete-orphan"
+        "Activity",
+        back_populates="itinerary_day",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
     trip: Mapped[Trip] = relationship("Trip", back_populates="itinerary_days")

@@ -8,10 +8,10 @@ class Activity(BaseModel):
 
 
 class ItineraryDay(BaseModel):
-    day_number: str = Field(gt=0, le=1000)
+    day: int = Field(gt=0, le=1000)
     activities: List[Activity] = []
 
 
 class CreateItineraryRequest(BaseModel):
     trip_id: uuid.UUID
-    days: List[ItineraryDay] = []
+    itinerary_days: List[ItineraryDay]
