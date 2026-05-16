@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.activity import Activity
 from app.models.itinerary_day import ItineraryDay
@@ -22,3 +23,10 @@ async def create_itinerary(itinerary_data: CreateItineraryRequest, db: AsyncSess
     await db.commit()
     await db.refresh(days[0])
     return dict(trip_id=itinerary_data.trip_id, itineraries=days)
+
+
+async def get_all_itineraries(db: AsyncSession):
+    result = await db.execute(select(ItineraryDay))
+    itineraries = result.scalars().all()
+    print(itineraries)
+    return itineraries

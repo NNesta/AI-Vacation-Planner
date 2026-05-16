@@ -22,17 +22,8 @@ class ItineraryCreateResponse(BaseModel):
     message: str = "Itinerary created successfully"
 
 
-#  "itinerary_days": [
-#       {
-#         "trip_id": "19fc7eeb-a66a-41d8-a124-033e6af25756",
-#         "day_number": 1,
-#         "id": "aea5a985-58e2-43bc-a1df-0917530aabe5",
-#         "activities": [
-#           {
-#             "itinerary_day_id": "aea5a985-58e2-43bc-a1df-0917530aabe5",
-#             "title": "Hiking volcanoes",
-#             "id": "69286ec2-274b-4403-afd5-91667db5bdc7"
-#           }
-#         ]
-#       }
-#     ]
+class ItineraryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    trip_id: uuid.UUID
+    itineraries: List[ItineraryDay]
