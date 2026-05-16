@@ -21,4 +21,4 @@ async def create_itinerary(itinerary_data: CreateItineraryRequest, db: AsyncSess
     db.add_all(days)
     await db.commit()
     await db.refresh(days[0])
-    return days
+    return dict(trip_id=itinerary_data.trip_id, itineraries=days)

@@ -17,7 +17,6 @@ async def create_user(register_data: auth_request.RegisterUser, db: AsyncSession
         select(User).where(func.lower(User.username) == register_data.username.lower())
     )
     user_exists = result.scalar_one_or_none()
-    print(user_exists)
     if user_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Username is already taken"

@@ -14,12 +14,12 @@ class ItineraryDay(BaseModel):
     activities: List[Activity] = []
 
 
-class ItineraryResponse(BaseModel):
+class ItineraryCreateResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     trip_id: uuid.UUID
-    day_number: int = Field(gt=0, le=1000)
-    activities: List[Activity] = []
+    itineraries: List[ItineraryDay]
+    message: str = "Itinerary created successfully"
 
 
 #  "itinerary_days": [
