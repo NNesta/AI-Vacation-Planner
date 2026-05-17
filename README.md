@@ -10,7 +10,6 @@ An intelligent travel planning application that helps users create, manage, and 
 - Trip Management: Create, read, update, and delete travel trips
 - Itinerary Planning: Generate day-by-day itineraries with activities
 - User Roles: Admin, Manager, and User role-based access
-- AI Integration: Google Gemini API for intelligent trip planning
 - Database: PostgreSQL with async SQLAlchemy ORM
 - API Documentation: Auto-generated OpenAPI/Swagger docs
 
@@ -113,7 +112,7 @@ The API is organized with versioning:
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/NNesta/AI-Vacation-Planner.git
 cd ai-vacation-planner
 ```
 
@@ -151,12 +150,10 @@ Create a `.env` file with the following variables:
 
 ```env
 secret_key=your-secret-key-here
-algorithm=HS256
-access_token_expires_minutes=30
+algorithm=ALGORITHM
+access_token_expires_minutes=integer
 
 database_url=postgresql+psycopg://user:password@localhost:5432/ai-vacation-db
-
-GEMINI_API_KEY=your-gemini-api-key
 ```
 
 ---
@@ -315,16 +312,6 @@ curl -X POST "http://localhost:8000/api/v1/itineraries/" \
 - `id` (UUID, Primary Key)
 - `itinerary_day_id` (UUID, Foreign Key to itinerary_days)
 - `title` (String)
-
----
-
-# Development
-
-## Running Tests
-
-```bash
-uv run pytest
-```
 
 ---
 
