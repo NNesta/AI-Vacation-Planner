@@ -78,20 +78,36 @@ ai-vacation-planner/
 ## 1. Authentication Flow
 
 The application uses JWT-based authentication:
+The application uses JWT-based authentication. When a user registers, the system:
+
+1. Validates the uniqueness of the username and email.
+2. Hashes the password using Argon2.
+3. Adds a **Background Task** to send a welcome email, ensuring the user registration response remains fast and non-blocking.
 
 ## 2. Trip Management
 
 Trips are created with destination, budget, days, and style:
+Trips are created with destination, budget, days, and style.
 
 ## 3. Itinerary Generation
+
+## 3. Email & Background Tasks
+
+To improve performance, long-running operations like sending emails are handled as background tasks. The `app/services/auth.py` service leverages FastAPI's `BackgroundTasks` to trigger `send_welcome_email` without delaying the HTTP response to the client. The email utility uses `fastapi-mail` and Jinja2 templates for HTML content.
+
+## 4. Itinerary Generation
 
 Itineraries are structured with days and activities:
 
 ## 4. Database Models
 
+## 5. Database Models
+
 The application uses SQLAlchemy 2.0 with async support:
 
 ## 5. API Endpoints
+
+## 6. API Endpoints
 
 The API is organized with versioning:
 
