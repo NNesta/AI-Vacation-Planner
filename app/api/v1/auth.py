@@ -1,10 +1,9 @@
 from typing import Annotated, Any
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, BackgroundTasks, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.dependancies import CurrentUser
 from app.db.session import DbSession
-from app.schemas.user.user_response import UserResponse
 from app.schemas.user.user_safe_response import UserSafeResponse
 
 from ...schemas.auth import auth_request, auth_response
@@ -19,8 +18,12 @@ router = APIRouter()
     response_model=auth_response.RegisterUserResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def register(register_data: auth_request.RegisterUser, db: DbSession):
-    return await auth_services.create_user(register_data, db)
+async def register(
+    register_data: auth_request.RegisterUser,
+    db: DbSession,
+    background_tasks: BackgroundTasks,
+):
+    return await auth_services.create_user(register_data, db, background_tasks)
 
 
 @router.post("/login", response_model=auth_response.LoginResponse)

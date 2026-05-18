@@ -1,17 +1,22 @@
 from datetime import UTC, timedelta, datetime
-from fastapi import HTTPException, status, Depends
+from fastapi import BackgroundTasks, HTTPException, status, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 import jwt
 from app.core.config import settings
 from app.models.user import User
+from app.utils.email import send_welcome_email
 from ..schemas.auth import auth_request
 
 hash_password = PasswordHash.recommended()
 
 
-async def create_user(register_data: auth_request.RegisterUser, db: AsyncSession):
+async def create_user(
+    register_data: auth_request.RegisterUser,
+    db: AsyncSession,
+    background_task,
+):
     # 1. check if the username is not taken
     result = await db.execute(
         select(User).where(func.lower(User.username) == register_data.username.lower())
@@ -40,6 +45,12 @@ async def create_user(register_data: auth_request.RegisterUser, db: AsyncSession
         password_hash=hash_password.hash(register_data.password),
     )
     db.add(new_user)
+    user = {"name": register_data.firstname, "email": register_data.email}
+    background_task.add_task(
+        send_welcome_email,
+        user,
+        "localhost:3000/login",
+    )
     await db.commit()
     await db.refresh(new_user)
     return new_user

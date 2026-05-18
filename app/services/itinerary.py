@@ -28,5 +28,4 @@ async def create_itinerary(itinerary_data: CreateItineraryRequest, db: AsyncSess
 async def get_all_itineraries(db: AsyncSession):
     result = await db.execute(select(ItineraryDay))
     itineraries = result.scalars().all()
-    print(itineraries)
     return itineraries
