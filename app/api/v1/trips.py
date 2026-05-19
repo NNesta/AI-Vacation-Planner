@@ -12,11 +12,13 @@ router = APIRouter()
 
 @router.post(
     "/",
-    response_model=List[trip_safe_response.CreateTripResponse],
+    response_model=trip_safe_response.CreateTripResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_trip(payload: trip_request.CreateTripRequest, db: DbSession):
-    return await trip_services.create_trip(payload, db=db)
+async def create_trip(
+    payload: trip_request.CreateTripRequest, db: DbSession, current_user: CurrentUser
+):
+    return await trip_services.create_trip(payload, db, current_user)
 
 
 @router.get("/", response_model=List[trip_response.TripResponse])
@@ -33,10 +35,10 @@ async def get_trip(trip_id: UUID, db: DbSession):
 async def update_trip(
     trip_id: UUID,
     update_data: trip_request.UpdateTripRequest,
-    current_user: CurrentUser,
     db: DbSession,
+    current_user: CurrentUser,
 ):
-    return await trip_services.update_trip(trip_id, update_data, current_user, db=db)
+    return await trip_services.update_trip(trip_id, update_data, db, current_user)
 
 
 @router.delete(

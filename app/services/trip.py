@@ -8,12 +8,15 @@ from app.models.user import User
 from ..schemas.trip import trip_request
 
 
-async def create_trip(trip_data: trip_request.CreateTripRequest, db: AsyncSession):
+async def create_trip(
+    trip_data: trip_request.CreateTripRequest, db: AsyncSession, current_user: User
+):
     new_trip = Trip(
         destination=trip_data.destination,
         budget=trip_data.budget,
         days=trip_data.days,
         trip_style=trip_data.trip_style,
+        creator_id=current_user.id,
     )
     db.add(new_trip)
     await db.commit()
@@ -45,8 +48,8 @@ async def get_trip(trip_id: UUID, db: AsyncSession):
 async def update_trip(
     trip_id: UUID,
     trip_data: trip_request.UpdateTripRequest,
-    current_user: User,
     db: AsyncSession,
+    current_user: User,
 ):
     result = await db.execute(select(Trip).where(Trip.id == trip_id))
     trip = result.scalar_one_or_none()
