@@ -47,9 +47,14 @@ class User(TypedDict):
     email: NameEmail
 
 
+def get_html_template(path: str, **content_variables):
+    template = templates.env.get_template(path)
+    return template.render(content_variables)
+
+
 async def send_welcome_email(user: User, login_url: str):
-    template = templates.env.get_template("email/create_account.html")
-    html_content = template.render(
+    html_content = get_html_template(
+        "email/create_account.html",
         user_name=user.get("name"),
         user_email=user.get("email"),
         login_url=login_url,
