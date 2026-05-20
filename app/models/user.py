@@ -1,14 +1,13 @@
 import uuid
 from sqlalchemy import UUID, String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from .user_trips import user_trip_associations
 from ..db.base import Base
 from typing import List, TYPE_CHECKING
 import enum
 
 if TYPE_CHECKING:
     from .trip import Trip
+    from .user_trips import UserTrip
 
 
 class Role(enum.Enum):
@@ -33,9 +32,7 @@ class User(Base):
     lastname: Mapped[str] = mapped_column(String(150), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(150), nullable=False)
     role: Mapped[str] = mapped_column(Enum(Role, name="role_enum"), default=Role.USER)
-    trips: Mapped[List["Trip"]] = relationship(
-        "Trip", secondary=user_trip_associations, back_populates="users"
-    )
+    user_trips: Mapped[List["UserTrip"]] = relationship(back_populates="user")
     created_trips: Mapped[List["Trip"]] = relationship(
         "Trip", back_populates="creator", cascade="all, delete-orphan"
     )
