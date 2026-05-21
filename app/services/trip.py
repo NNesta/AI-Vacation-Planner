@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.trip import Trip
 from app.models.user import User
+from app.models.user_trips import UserTrip
 from ..schemas.trip import trip_request
 
 
@@ -24,14 +25,32 @@ async def create_trip(
     return new_trip
 
 
+async def apply_for_trip(trip_id: UUID, db: AsyncSession, current_user: User):
+    result = await db.execute(select(Trip).where(Trip.id == trip_id))
+    trip = result.scalar_one_or_none()
+    if not trip:
+        raise HTTPException(
+            detail="Trip not found", status_code=status.HTTP_404_NOT_FOUND
+        )
+    if trip.creator_id == current_user.id:
+        raise HTTPException(
+            detail="Not allowed to  apply on your own trip",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    trip.user_trips.append(UserTrip(trip_id=trip_id, user_id=current_user.id))
+    await db.commit()
+    return trip
+
+
 async def get_trips(db: AsyncSession):
     result = await db.execute(
         select(Trip)
-        .options(selectinload(Trip.users))
+        .options(selectinload(Trip.user_trips))
         .options(selectinload(Trip.creator))
         .options(selectinload(Trip.itinerary_days))
     )
     trips = result.scalars().all()
+    print(trips[3].user_trips)
     return trips
 
 

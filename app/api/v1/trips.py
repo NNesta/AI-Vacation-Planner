@@ -21,6 +21,11 @@ async def create_trip(
     return await trip_services.create_trip(payload, db, current_user)
 
 
+@router.patch("/apply/{trip_id}", response_model=trip_response.TripResponse)
+async def apply_for_trip(trip_id: UUID, db: DbSession, current_user: CurrentUser):
+    return await trip_services.apply_for_trip(trip_id, db, current_user)
+
+
 @router.get("/", response_model=List[trip_response.TripResponse])
 async def get_trips(db: DbSession):
     return await trip_services.get_trips(db=db)
