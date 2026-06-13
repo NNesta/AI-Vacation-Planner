@@ -25,7 +25,7 @@ async def register(
 ):
     return await auth_services.create_user(register_data, db, background_tasks)
 
-
+ 
 @router.post("/login", response_model=auth_response.LoginResponse)
 async def login(
     login_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession

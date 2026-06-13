@@ -43,19 +43,25 @@ async def apply_for_trip(trip_id: UUID, db: AsyncSession, current_user: User):
 
 
 async def get_trips(db: AsyncSession):
-    result = await db.execute(
-        select(Trip)
-        .options(selectinload(Trip.user_trips))
-        .options(selectinload(Trip.creator))
-        .options(selectinload(Trip.itinerary_days))
+    stmt = select(Trip).options(
+        selectinload(Trip.user_trips).selectinload(UserTrip.user),
+        selectinload(Trip.creator),
+        selectinload(Trip.itinerary_days),
     )
+    result = await db.execute(stmt)
     trips = result.scalars().all()
-    print(trips[3].user_trips)
     return trips
 
 
 async def get_trip(trip_id: UUID, db: AsyncSession):
-    result = await db.execute(select(Trip).where(Trip.id == trip_id))
+    stmt = (
+        select(Trip)
+        .where(Trip.id == trip_id)
+        .options(selectinload(Trip.user_trips))
+        .options(selectinload(Trip.creator))
+        .options(selectinload(Trip.itinerary_days))
+    )
+    result = await db.execute(stmt)
     trip = result.scalar_one_or_none()
     if not trip:
         raise HTTPException(

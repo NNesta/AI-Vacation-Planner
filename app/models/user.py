@@ -32,7 +32,7 @@ class User(Base):
     lastname: Mapped[str] = mapped_column(String(150), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(150), nullable=False)
     role: Mapped[str] = mapped_column(Enum(Role, name="role_enum"), default=Role.USER)
-    user_trips: Mapped[List["UserTrip"]] = relationship(back_populates="user")
     created_trips: Mapped[List["Trip"]] = relationship(
         "Trip", back_populates="creator", cascade="all, delete-orphan"
     )
+    user_trips = relationship("UserTrip", back_populates="user")

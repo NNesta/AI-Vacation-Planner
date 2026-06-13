@@ -8,14 +8,6 @@ from app.models.trip import Trip
 from app.models.user import User
 
 
-# user_trip_associations = Table(
-#     "user_trips",
-#     Base.metadata,
-#     Column("user_id", ForeignKey("users.id"), primary_key=True),
-#     Column("trip_id", ForeignKey("trips.id"), primary_key=True),
-# )
-
-
 class StatusEnum(enum.Enum):
     PENDING = "PENDING"
     REJECTED = "REJECTED"
@@ -39,5 +31,5 @@ class UserTrip(Base):
         Enum(StatusEnum, name="status_enum"), default=StatusEnum.PENDING, nullable=True
     )
 
-    user: Mapped[User] = relationship(back_populates="user_trips")
-    trip: Mapped[Trip] = relationship(back_populates="user_users")
+    user: Mapped[User] = relationship("User", back_populates="user_trips")
+    trip: Mapped[Trip] = relationship("Trip", back_populates="user_trips")

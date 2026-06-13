@@ -1,8 +1,8 @@
+from __future__ import annotations
 import uuid
 from sqlalchemy import UUID, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .user import User
-
 from ..db.base import Base
 import enum
 from typing import List, TYPE_CHECKING
@@ -32,11 +32,11 @@ class Trip(Base):
         Enum(TripStyle, name="trip_style_enum"), default=TripStyle.BUDGET
     )
 
-    user_trips: Mapped[List["UserTrip"]] = relationship(back_populates="trip")
-    creator: Mapped[User] = relationship("User", back_populates="created_trips")
-    itinerary_days: Mapped[List["ItineraryDay"]] = relationship(
+    creator = relationship("User", back_populates="created_trips")
+    itinerary_days = relationship(
         "ItineraryDay",
         back_populates="trip",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    user_trips = relationship("UserTrip", back_populates="trip")
