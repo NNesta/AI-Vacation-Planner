@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
@@ -14,6 +15,8 @@ class TripSafeResponse(BaseModel):
         default=Decimal("1.00"), ge=0, le=1_000_000, decimal_places=2
     )
     trip_style: TripStyle = Field(default=TripStyle.BUDGET)
+    start_datetime: datetime
+    end_datetime: datetime
 
 
 class CreateTripResponse(TripSafeResponse):

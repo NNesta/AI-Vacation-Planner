@@ -21,10 +21,12 @@ class Trip(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     destination: Mapped[str] = mapped_column(String(120), nullable=False)
-    start_date: Mapped[datetime] = mapped_column(
+    start_datetime: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_datetime: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     budget: Mapped[float] = mapped_column(Float, nullable=True)
     trip_style: Mapped[TripStyle] = mapped_column(
         Enum(TripStyle, name="trip_style_enum"), default=TripStyle.BUDGET

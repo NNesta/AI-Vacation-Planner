@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from decimal import Decimal
 from uuid import UUID
@@ -25,3 +26,5 @@ class TripResponse(BaseModel):
     user_trips: List[UserTripSchema]
     creator: UserSafeResponse
     itinerary_days: List[ItineraryDay]
+    start_datetime: datetime
+    end_datetime: datetime
