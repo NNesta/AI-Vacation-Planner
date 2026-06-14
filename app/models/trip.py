@@ -20,6 +20,8 @@ class Trip(Base):
     creator_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
+    title: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(String(250), nullable=True)
     destination: Mapped[str] = mapped_column(String(120), nullable=False)
     start_datetime: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

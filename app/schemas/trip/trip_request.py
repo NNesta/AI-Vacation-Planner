@@ -7,6 +7,8 @@ from app.enums.trip_budget_enum import TripStyle
 
 
 class UpdateTripRequest(BaseModel):
+    title: Optional[str] = Field(min_length=2, max_length=100)
+    description: Optional[str] = Field(max_length=250)
     destination: Optional[str] = Field(min_length=2, max_length=200, default=None)
     budget: Optional[Decimal] = Field(
         ge=0, le=1_000_000, decimal_places=2, default=None
@@ -27,6 +29,8 @@ class UpdateTripRequest(BaseModel):
 
 
 class CreateTripRequest(BaseModel):
+    title: str = Field(min_length=2, max_length=100)
+    description: Optional[str] = Field(max_length=250)
     destination: str = Field(min_length=2, max_length=200)
     budget: Decimal = Field(
         default=Decimal("1.00"), ge=0, le=1_000_000, decimal_places=2

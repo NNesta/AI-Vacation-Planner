@@ -17,6 +17,8 @@ class UserTripSchema(BaseModel):
 
 class TripResponse(BaseModel):
     id: UUID
+    title: str = Field(min_length=2, max_length=100)
+    description: str = Field(max_length=250)
     destination: str = Field(min_length=2, max_length=200)
     days: int = Field(default=1, ge=0, le=50)
     budget: Decimal = Field(
