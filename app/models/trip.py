@@ -1,15 +1,10 @@
 from __future__ import annotations
+from datetime import datetime
 import uuid
-from sqlalchemy import UUID, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import UUID, DateTime, Enum, Float, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .user import User
 from ..db.base import Base
 import enum
-from typing import List, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.models.itinerary_day import ItineraryDay
-    from .user_trips import UserTrip
 
 
 class TripStyle(enum.Enum):
@@ -26,7 +21,10 @@ class Trip(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     destination: Mapped[str] = mapped_column(String(120), nullable=False)
-    days: Mapped[int] = mapped_column(Integer, nullable=True)
+    start_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     budget: Mapped[float] = mapped_column(Float, nullable=True)
     trip_style: Mapped[TripStyle] = mapped_column(
         Enum(TripStyle, name="trip_style_enum"), default=TripStyle.BUDGET
