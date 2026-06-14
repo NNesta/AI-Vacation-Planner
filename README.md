@@ -51,7 +51,7 @@ ai-vacation-planner/
 │   ├── models/              # SQLAlchemy models
 │   │   ├── user.py          # User model
 │   │   ├── trip.py          # Trip model
-│   │   ├── itinerary_day.py # Itinerary day model
+│   │   ├── itinerary.py # Itinerary day model
 │   │   ├── activity.py      # Activity model
 │   │   └── user_trips.py    # Many-to-many association
 │   ├── schemas/             # Pydantic schemas
@@ -276,7 +276,7 @@ curl -X POST "http://localhost:8000/api/v1/itineraries/" \
   -H "Content-Type: application/json" \
   -d '{
     "trip_id": "<trip-uuid>",
-    "itinerary_days": [
+    "itineraries": [
       {
         "day": 1,
         "activities": [
@@ -326,7 +326,7 @@ curl -X POST "http://localhost:8000/api/v1/itineraries/" \
 ## Activities Table
 
 - `id` (UUID, Primary Key)
-- `itinerary_day_id` (UUID, Foreign Key to itinerary_days)
+- `itinerary_day_id` (UUID, Foreign Key to itineraries)
 - `title` (String)
 
 ---

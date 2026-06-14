@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from app.models.activity import Activity
 
 
-class ItineraryDay(Base):
-    __tablename__ = "itinerary_days"
+class Itinerary(Base):
+    __tablename__ = "itineraries"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4()
@@ -19,11 +19,11 @@ class ItineraryDay(Base):
     trip_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("trips.id"), nullable=False
     )
-    day_number: Mapped[int]
+    day: Mapped[int]
     activities: Mapped[List["Activity"]] = relationship(
         "Activity",
-        back_populates="itinerary_day",
+        back_populates="itinerary",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    trip: Mapped[Trip] = relationship("Trip", back_populates="itinerary_days")
+    trip: Mapped[Trip] = relationship("Trip", back_populates="itineraries")
