@@ -1,12 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.chat.messages import chat
-from app.ai.prompts.itineraries_prompt import get_prompt
+from app.ai.prompts.itineraries_prompt import get_prompts
 from app.models.activity import Activity
 from app.models.itinerary_day import ItineraryDay
 from app.schemas.itinerary.itinerary_request import CreateItineraryRequest
 from .trip import get_trip
 import json
+
+MAX_TOKENS = 1000
 
 
 async def create_itinerary(itinerary_data: CreateItineraryRequest, db: AsyncSession):
@@ -36,12 +38,9 @@ async def get_all_itineraries(db: AsyncSession):
 
 
 async def generate_itineraries(trip_id, db: AsyncSession):
-    # First of all we have to get the trip using trip_id
-
     trip = await get_trip(trip_id, db=db)
 
-    # We have to use the data from trip to prompt to get the itineraties
-    user_prompt, system_prompt = get_prompt(
+    user_prompts, system_prompt = get_prompts(
         trip.title,
         trip.start_datetime,
         trip.end_datetime,
@@ -51,10 +50,9 @@ async def generate_itineraries(trip_id, db: AsyncSession):
         trip.description,
     )
     response = chat(
-        [user_prompt, {"role": "assistant", "content": "```json"}],
+        MAX_TOKENS,
+        user_prompts,
         system_prompt,
         stop_sequences=["```"],
     )
     return json.loads(response.strip())
-
-    # return itineraries in the right format

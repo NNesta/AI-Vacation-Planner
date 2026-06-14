@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 
-def get_prompt(
+def get_prompts(
     title: str,
     start_datetime: datetime,
     end_datetime: datetime,
@@ -13,47 +13,52 @@ def get_prompt(
 ):
     if description:
         user_prompt = f"""
-    Give itinarries of this trip with title: {title} with this descriprion: {description}. It will start from {start_datetime} to {end_datetime}. The destination is {destination} with a budget of {budget}.
-The travel style is {trip_style}.
-example of output: [
-{{
-      "day": 1,
-      "activities": [
-        "Visit Kigali Genocide Memorial",
-        "Explore Kimironko Market"
-      ]
-    }},
-  {{
-    "day_number": 2,
-    "activities": ["Visit Richard kandt Museum","Play basketball at lub Rafiki"]
-  }},
-]
-    """
+        Give itinarries of this trip with title: {title} with this descriprion: {description}. It will start from {start_datetime} to {end_datetime}. The destination is {destination} with a budget of {budget}.
+        The travel style is {trip_style}.
+        example of output: [
+        {{
+            "day": 1,
+            "activities": [
+                "Visit Kigali Genocide Memorial",
+                "Explore Kimironko Market"
+            ]
+            }},
+        {{
+            "day_number": 2,
+            "activities": ["Visit Richard kandt Museum","Play basketball at lub Rafiki"]
+        }},
+        ]
+            """
     user_prompt = f"""
     Plan a trip with title: {title} that will start from {start_datetime} to {end_datetime}. The destination is {destination} with a budget of {budget}.
-The travel style is {trip_style}.
-example: [
-{{
-      "day": 1,
-      "activities": [
-        "Visit Kigali Genocide Memorial",
-        "Explore Kimironko Market"
-      ]
+    The travel style is {trip_style}.
+    example: [
+    {{
+        "day": 1,
+        "activities": [
+            "Visit Kigali Genocide Memorial",
+            "Explore Kimironko Market"
+        ]
+        }},
+    {{
+        "day_number": 2,
+        "activities": ["Visit Richard kandt Museum","Play basketball at lub Rafiki"]
     }},
- {{
-    "day_number": 2,
-    "activities": ["Visit Richard kandt Museum","Play basketball at lub Rafiki"]
-  }},
-]
-    #     """
-    #     system_prompt = f"""
-    #     Give the output in json format with the following structure
-    #     [
-    #   {{
-    #     "day_number": ,
-    #     "activities": []
-    #   }}
-    # ]
-    #     """
+    ]
+        """
+    system_prompt = f"""
+        You are an expert Rwanda travel planner. 
+        Generate professional itineraries for destinations across Rwanda.
+        Focus on:
+        - Cultural experiences
+        - Nature and wildlife
+        - Local cuisine
+        - Historical attractions
+        - Adventure activities
+        Give 3 activities at most per day.
+        """
 
-    return {"role": "user", "content": user_prompt}, None
+    return [
+        {"role": "user", "content": user_prompt},
+        {"role": "assistant", "content": "```json"},
+    ], system_prompt

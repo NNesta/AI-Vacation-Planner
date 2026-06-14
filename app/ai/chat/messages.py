@@ -5,10 +5,9 @@ from anthropic.types import MessageParam, TextBlockParam
 from app.ai.providers.anthropic import client
 from app.core.config import settings
 
-MAX_TOKENS = 1000
-
 
 def chat(
+    max_tokens: int,
     messages: Iterable[MessageParam],
     system: str | Iterable[TextBlockParam] | Omit = None,
     temperature: float | Omit = 1.0,
@@ -16,7 +15,7 @@ def chat(
 ) -> str:
     params = {
         "model": settings.LLM_MODEL,
-        "max_tokens": MAX_TOKENS,
+        "max_tokens": max_tokens,
         "messages": messages,
         "temperature": temperature,
         "stop_sequences": stop_sequences,
