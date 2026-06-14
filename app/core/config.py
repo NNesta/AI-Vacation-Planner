@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     MAIL_STARTTLS: bool = True
     MAIL_SSL_TLS: bool = False
     USE_CREDENTIALS: bool = True
+    LLM_MODEL: str
+    ANTHROPIC_API_KEY: str
 
 
 settings = Settings()  # type: ignore[call-arg]

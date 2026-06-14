@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, status
 from typing import List
 from app.db.session import DbSession
@@ -18,6 +19,11 @@ router = APIRouter()
 )
 async def create_itinerary(itinerary_data: CreateItineraryRequest, db: DbSession):
     return await itinerary_service.create_itinerary(itinerary_data, db)
+
+
+@router.get("/generate/{trip_id}")
+async def generate_itineraries(trip_id: UUID, db: DbSession):
+    return await itinerary_service.generate_itineraries(trip_id, db)
 
 
 @router.get("/", response_model=List[ItineraryDay])
