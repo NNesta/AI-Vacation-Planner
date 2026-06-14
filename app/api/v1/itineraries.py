@@ -5,7 +5,7 @@ from app.db.session import DbSession
 from app.schemas.itinerary.itinerary_request import CreateItineraryRequest
 from app.schemas.itinerary.itinerary_response import (
     ItineraryCreateResponse,
-    ItineraryDay,
+    Itinerary,
     ItineraryResponse,
 )
 from app.services import itinerary as itinerary_service
@@ -21,11 +21,11 @@ async def create_itinerary(itinerary_data: CreateItineraryRequest, db: DbSession
     return await itinerary_service.create_itinerary(itinerary_data, db)
 
 
-@router.get("/generate/{trip_id}")
+@router.get("/generate/{trip_id}", response_model=List[Itinerary])
 async def generate_itineraries(trip_id: UUID, db: DbSession):
     return await itinerary_service.generate_itineraries(trip_id, db)
 
 
-@router.get("/", response_model=List[ItineraryDay])
+@router.get("/", response_model=List[Itinerary])
 async def get_all_itineraries(db: DbSession):
     return await itinerary_service.get_all_itineraries(db)

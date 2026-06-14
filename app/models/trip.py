@@ -35,8 +35,8 @@ class Trip(Base):
     )
 
     creator = relationship("User", back_populates="created_trips")
-    itinerary_days = relationship(
-        "ItineraryDay",
+    itineraries = relationship(
+        "Itinerary",
         back_populates="trip",
         cascade="all, delete-orphan",
         lazy="selectin",
