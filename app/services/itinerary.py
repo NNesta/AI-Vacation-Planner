@@ -55,6 +55,7 @@ async def generate_itineraries(trip_id, db: AsyncSession):
         MAX_TOKENS,
         user_prompts,
         system_prompt,
+        temperature=0.8,
         stop_sequences=["```"],
     )
     return json.loads(response.strip())
