@@ -18,7 +18,7 @@ class UserTrip(Base):
     __tablename__ = "user_trips"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4(), nullable=True
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=True
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False

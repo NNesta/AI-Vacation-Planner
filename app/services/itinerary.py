@@ -16,7 +16,7 @@ async def create_itinerary(itinerary_data: CreateItineraryRequest, db: AsyncSess
     for day_item in itinerary_data.itineraries:
         activities = []
         for activity in day_item.activities:
-            new_activity = Activity(title=activity.title)
+            new_activity = Activity(title=activity)
             activities.append(new_activity)
 
         day = Itinerary(

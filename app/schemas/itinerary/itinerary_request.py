@@ -9,7 +9,7 @@ class Activity(BaseModel):
 
 class Itinerary(BaseModel):
     day: int = Field(gt=0, le=1000)
-    activities: List[Activity] = []
+    activities: List[str] = []
 
 
 class CreateItineraryRequest(BaseModel):
