@@ -14,8 +14,8 @@ class UpdateTripRequest(BaseModel):
         ge=0, le=1_000_000, decimal_places=2, default=None
     )
     trip_style: Optional[TripStyle] = None
-    start_datetime: Optional[datetime]
-    end_datetime: Optional[datetime]
+    start_datetime: Optional[datetime] = None
+    end_datetime: Optional[datetime] = None
 
     @model_validator(mode="after")
     def validate_dates(self):
