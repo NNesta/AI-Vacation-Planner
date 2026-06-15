@@ -8,7 +8,7 @@ from app.schemas.itinerary.itinerary_request import CreateItineraryRequest
 from .trip import get_trip
 import json
 
-MAX_TOKENS = 1000
+MAX_TOKENS = 2000
 
 
 async def create_itinerary(itinerary_data: CreateItineraryRequest, db: AsyncSession):
@@ -16,7 +16,9 @@ async def create_itinerary(itinerary_data: CreateItineraryRequest, db: AsyncSess
     for day_item in itinerary_data.itineraries:
         activities = []
         for activity in day_item.activities:
-            new_activity = Activity(title=activity)
+            new_activity = Activity(
+                title=activity.title, description=activity.description
+            )
             activities.append(new_activity)
 
         day = Itinerary(

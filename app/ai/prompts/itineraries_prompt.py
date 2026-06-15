@@ -19,32 +19,62 @@ def get_prompts(
         {{
             "day": 1,
             "activities": [
-                "Visit Kigali Genocide Memorial",
-                "Explore Kimironko Market"
-            ]
+    {{
+      "title": "Visit Kigali Genocide Memorial",
+      "description": "Learn about Rwanda's history and the events of the 1994 Genocide against the Tutsi through exhibits, personal testimonies, and memorial gardens that promote remembrance, education, and reconciliation."
+    }},
+   {{
+      "title": "Explore Kimironko Market",
+      "description": "Experience one of Kigali's busiest local markets, where you can browse fresh produce, colorful fabrics, handcrafted goods, and interact with local vendors to gain insight into everyday Rwandan life."
+    }}
+  ]
             }},
         {{
             "day_number": 2,
-            "activities": ["Visit Richard kandt Museum","Play basketball at lub Rafiki"]
+            "activities": [
+   {{
+      "title": "Visit Richard Kandt Museum",
+      "description": "Discover the history of Kigali and Rwanda through exhibits at the former residence of Richard Kandt, the first colonial resident of Rwanda. Learn about the country's natural heritage, colonial era, and cultural development."
+    }},
+    {{
+      "title": "Play Basketball at Club Rafiki",
+      "description": "Enjoy a friendly basketball session at Club Rafiki, a community-focused sports and recreation center. Practice your skills, join local players, and experience Kigali's vibrant sports culture."
+    }}
+  ]
         }},
         ]
             """
     user_prompt = f"""
     Plan a trip with title: {title} that will start from {start_datetime} to {end_datetime}. The destination is {destination} with a budget of {budget}.
     The travel style is {trip_style}.
-    example: [
+    example of output: [
+        {{
+            "day": 1,
+            "activities": [
     {{
-        "day": 1,
-        "activities": [
-            "Visit Kigali Genocide Memorial",
-            "Explore Kimironko Market"
-        ]
-        }},
-    {{
-        "day_number": 2,
-        "activities": ["Visit Richard kandt Museum","Play basketball at lub Rafiki"]
+      "title": "Visit Kigali Genocide Memorial",
+      "description": "Learn about Rwanda's history and the events of the 1994 Genocide against the Tutsi through exhibits, personal testimonies, and memorial gardens that promote remembrance, education, and reconciliation."
     }},
-    ]
+   {{
+      "title": "Explore Kimironko Market",
+      "description": "Experience one of Kigali's busiest local markets, where you can browse fresh produce, colorful fabrics, handcrafted goods, and interact with local vendors to gain insight into everyday Rwandan life."
+    }}
+  ]
+            }},
+        {{
+            "day_number": 2,
+            "activities": [
+   {{
+      "title": "Visit Richard Kandt Museum",
+      "description": "Discover the history of Kigali and Rwanda through exhibits at the former residence of Richard Kandt, the first colonial resident of Rwanda. Learn about the country's natural heritage, colonial era, and cultural development."
+    }},
+    {{
+      "title": "Play Basketball at Club Rafiki",
+      "description": "Enjoy a friendly basketball session at Club Rafiki, a community-focused sports and recreation center. Practice your skills, join local players, and experience Kigali's vibrant sports culture."
+    }}
+  ]
+        }},
+        ]
         """
     system_prompt = f"""
         You are an expert Rwanda travel planner. 
@@ -55,7 +85,7 @@ def get_prompts(
         - Local cuisine
         - Historical attractions
         - Adventure activities
-        Give 3 activities at most per day.
+        Give maximum of 3 activities per day.
         """
 
     return [
