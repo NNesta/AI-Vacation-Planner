@@ -1,10 +1,11 @@
-from typing import List
+from typing import List, Optional
 import uuid
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class Activity(BaseModel):
     title: str = Field(min_length=2, max_length=200)
+    description: Optional[str] = None
 
 
 class Itinerary(BaseModel):
