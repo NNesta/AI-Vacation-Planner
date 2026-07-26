@@ -1,12 +1,13 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 from anthropic import Omit
 from anthropic.types import MessageParam, TextBlockParam
+
 from app.ai.providers.anthropic import client
 from app.core.config import settings
 
 
-def chat(
+def call_llm(
     max_tokens: int,
     messages: Iterable[MessageParam],
     system: str | Iterable[TextBlockParam] | Omit = None,
