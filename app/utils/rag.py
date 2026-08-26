@@ -1,8 +1,4 @@
-"""
-Ties retrieval to generation: given a user question, pull the most relevant
-travel chunks from the vector database, inject them into a prompt, and ask
-Claude to answer grounded in that context.
-"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

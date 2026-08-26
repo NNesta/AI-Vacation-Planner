@@ -1,9 +1,4 @@
-"""
-Converts the raw travel guide text files in data/source_text/ into real
-PDF documents in data/pdfs/. This gives us actual .pdf files (sourced from
-public National Park Service visitor guides) for the ingestion pipeline to
-read and preprocess, rather than working from plain text directly.
-"""
+
 import os
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -49,8 +44,6 @@ def text_to_pdf(txt_path: str, pdf_path: str) -> None:
         lines = block.split("\n")
         heading, rest = lines[0], "\n".join(lines[1:]).strip()
 
-        # Treat the very first block's first line as the document title,
-        # short lines without trailing punctuation as sub-headings.
         if first:
             story.append(Paragraph(heading, title_style))
             first = False

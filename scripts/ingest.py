@@ -1,14 +1,4 @@
-"""
-Offline indexing pipeline for the Vacation Planner travel knowledge base.
 
-Run this whenever you add, remove, or update PDFs in data/pdfs/:
-
-    python scripts/ingest.py
-
-It reads every PDF in data/pdfs/, chunks the text, fits (or re-fits) the
-embedding vectorizer over the whole corpus, embeds every chunk, and writes
-everything into the persistent Chroma collection in data/chroma_db/.
-"""
 import sys
 from pathlib import Path
 
