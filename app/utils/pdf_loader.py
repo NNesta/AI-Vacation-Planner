@@ -18,7 +18,6 @@ class Chunk:
 
 
 def extract_pdf_text(pdf_path: Path) -> str:
-    """Extract raw text from every page of a PDF and join it."""
     reader = PdfReader(str(pdf_path))
     pages = []
     for page in reader.pages:
@@ -32,7 +31,6 @@ def _destination_from_filename(pdf_path: Path) -> str:
 
 
 def load_and_chunk_pdfs(pdf_dir: Path = PDF_DIR) -> list[Chunk]:
-    """Load every PDF in pdf_dir, chunk it, and attach metadata to each chunk."""
     pdf_dir = Path(pdf_dir)
     chunks: list[Chunk] = []
 

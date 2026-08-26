@@ -8,7 +8,6 @@ from app.config import CHUNK_OVERLAP_CHARS, CHUNK_SIZE_CHARS
 
 
 def clean_text(text: str) -> str:
-    """Collapse excess whitespace, e.g. left over from PDF text extraction."""
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
@@ -23,11 +22,6 @@ def chunk_paragraphs(
     chunk_size: int = CHUNK_SIZE_CHARS,
     overlap: int = CHUNK_OVERLAP_CHARS,
 ) -> list[str]:
-    """
-    Greedily pack paragraphs into chunks up to `chunk_size` characters.
-    A paragraph longer than chunk_size on its own is split with a sliding
-    window and overlap so no content is lost.
-    """
     chunks: list[str] = []
     current = ""
 
@@ -62,7 +56,6 @@ def chunk_text(
     chunk_size: int = CHUNK_SIZE_CHARS,
     overlap: int = CHUNK_OVERLAP_CHARS,
 ) -> list[str]:
-    """Convenience wrapper: clean -> split into paragraphs -> pack into chunks."""
     cleaned = clean_text(text)
     paragraphs = split_into_paragraphs(cleaned)
     return chunk_paragraphs(paragraphs, chunk_size=chunk_size, overlap=overlap)
