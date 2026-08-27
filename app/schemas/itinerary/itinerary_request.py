@@ -14,6 +14,20 @@ class Location(BaseModel):
         description="Physical address or location details that help travelers find the place.",
     )
 
+class AskRequest(BaseModel):
+    query: str = Field(..., min_length=1, description="The traveler's question")
+    top_k: int | None = Field(None, ge=1, le=10)
+
+
+class SourceOut(BaseModel):
+    source: str
+    destination: str
+    distance: float
+    snippet: str
+
+
+
+
 
 class Activity(BaseModel):
     title: str = Field(

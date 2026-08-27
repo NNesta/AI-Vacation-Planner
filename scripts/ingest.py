@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.utils.config import PDF_DIR, VECTORIZER_PATH  # noqa: E402
-from app.utils.embeddings import TfidfEmbeddingFunction  # noqa: E402
+from app.utils.config import PDF_DIR  # noqa: E402
+from app.utils.embeddings import load_embedding_function  # noqa: E402
 from app.utils.pdf_loader import load_and_chunk_pdfs  # noqa: E402
 from app.utils.vector_store import add_chunks, reset_collection  # noqa: E402
 
@@ -18,11 +18,8 @@ def main() -> None:
         return
     print(f"Loaded {len(chunks)} chunks from PDFs.")
 
-    print("Fitting embedding vectorizer over the full corpus ...")
-    embedding_fn = TfidfEmbeddingFunction()
-    embedding_fn.fit([c.text for c in chunks])
-    embedding_fn.save(VECTORIZER_PATH)
-    print(f"Saved vectorizer to {VECTORIZER_PATH}")
+    print("Loading sentence-transformer embedding model ...")
+    embedding_fn = load_embedding_function()
 
     print("Rebuilding vector collection ...")
     collection = reset_collection(embedding_fn)

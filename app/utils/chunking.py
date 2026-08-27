@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-from app.config import CHUNK_OVERLAP_CHARS, CHUNK_SIZE_CHARS
+from app.utils.config import CHUNK_OVERLAP_CHARS, CHUNK_SIZE_CHARS
 
 
 def clean_text(text: str) -> str:

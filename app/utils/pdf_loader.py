@@ -6,8 +6,8 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-from app.chunking import chunk_text
-from app.config import PDF_DIR
+from app.utils.chunking import chunk_text
+from app.utils.config import PDF_DIR
 
 
 @dataclass

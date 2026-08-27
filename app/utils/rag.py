@@ -5,29 +5,15 @@ from dataclasses import dataclass
 
 import anthropic
 
-from app.config import (
+from app.utils.config import (
     ANTHROPIC_API_KEY,
     CLAUDE_MAX_TOKENS,
     CLAUDE_MODEL,
     MAX_RELEVANT_DISTANCE,
     TOP_K,
 )
-from app.vector_store import query as vector_query
-
-SYSTEM_PROMPT = """You are the AI assistant for a Vacation Planner app. \
-You help travelers plan trips using the travel knowledge base context provided \
-with each question, which comes from official park and destination visitor guides.
-
-Rules:
-- Prioritize the provided context over your own general knowledge when they \
-overlap or conflict; the context is more current and specific to these parks.
-- If the context does not contain relevant information for the question, say so \
-plainly, then you may offer general knowledge but label it clearly as not from \
-the knowledge base.
-- Be concrete and practical: mention trail names, distances, hours, or logistics \
-from the context when they are relevant to the question.
-- Keep answers focused and conversational, like a knowledgeable trip-planning \
-assistant, not a copy-pasted brochure."""
+from app.utils.vector_store import query as vector_query
+from app.ai.prompts.itineraries_prompt import RAG_SYSTEM_PROMPT
 
 
 @dataclass
@@ -98,7 +84,7 @@ def answer_question(collection, question: str, top_k: int = TOP_K) -> RagResult:
     response = client.messages.create(
         model=CLAUDE_MODEL,
         max_tokens=CLAUDE_MAX_TOKENS,
-        system=SYSTEM_PROMPT,
+        system=RAG_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
     )
     answer_text = "".join(

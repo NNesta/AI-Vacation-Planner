@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.chat.messages import call_llm
-from app.ai.prompts.itineraries_prompt_v2 import get_prompts, get_retry_prompt
+from app.ai.prompts.itineraries_prompt import get_prompts, get_retry_prompt
 from app.models.activity import Activity
 from app.models.itinerary import Itinerary as ItineraryModel
 from app.schemas.itinerary.itinerary_request import (
@@ -12,6 +12,7 @@ from app.schemas.itinerary.itinerary_request import (
 )
 
 from .trip import get_trip
+from app.utils.rag import retrieve
 
 n_retry = 4
 MAX_TOKENS = 2000

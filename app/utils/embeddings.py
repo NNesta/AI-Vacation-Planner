@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from chromadb import Documents, EmbeddingFunction, Embeddings
 
-from app.config import SENTENCE_TRANSFORMER_MODEL
+from app.utils.config import SENTENCE_TRANSFORMER_MODEL
+from sentence_transformers import SentenceTransformer 
 
 
 class SentenceTransformerEmbeddingFunction(EmbeddingFunction):
@@ -13,7 +14,7 @@ class SentenceTransformerEmbeddingFunction(EmbeddingFunction):
         return "sentence_transformer"
 
     def __init__(self, model_name: str = SENTENCE_TRANSFORMER_MODEL):
-        from sentence_transformers import SentenceTransformer  # lazy import
+         # lazy import
 
         self.model_name = model_name
         self._model = SentenceTransformer(model_name)
