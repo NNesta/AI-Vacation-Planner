@@ -9,7 +9,9 @@ origins = ["*"]
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     embedding_fn = load_embedding_function()
-    get_collection(embedding_fn)
+
+    collection = get_collection(embedding_fn)
+    app.state.collection = collection
 
     yield
 
