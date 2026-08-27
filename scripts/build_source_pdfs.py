@@ -43,8 +43,7 @@ def text_to_pdf(txt_path: str, pdf_path: str) -> None:
         lines = block.split("\n")
         heading, rest = lines[0], "\n".join(lines[1:]).strip()
 
-        # Treat the very first block's first line as the document title,
-        # short lines without trailing punctuation as sub-headings.
+        
         if first:
             story.append(Paragraph(heading, title_style))
             first = False
