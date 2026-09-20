@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     USE_CREDENTIALS: bool = True
     LLM_MODEL: str
     ANTHROPIC_API_KEY: str
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 
 
 settings = Settings()  # type: ignore[call-arg]

@@ -1,7 +1,7 @@
 from typing import List, Optional
 import uuid
 from pydantic import BaseModel, ConfigDict, Field
-
+from app.schemas.itinerary.itinerary_request import Itinerary, SourceOut
 
 class Activity(BaseModel):
     title: str = Field(min_length=2, max_length=200)
@@ -28,3 +28,8 @@ class ItineraryResponse(BaseModel):
 
     trip_id: uuid.UUID
     itineraries: List[Itinerary]
+
+class AskResponse(BaseModel):
+    answer: str
+    used_knowledge_base: bool
+    sources: list[SourceOut]
