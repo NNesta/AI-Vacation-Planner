@@ -13,9 +13,12 @@ async def create_trip(
     trip_data: trip_request.CreateTripRequest, db: AsyncSession, current_user: User
 ):
     new_trip = Trip(
+        title=trip_data.title,
+        description=trip_data.description,
         destination=trip_data.destination,
+        start_datetime=trip_data.start_datetime,
+        end_datetime=trip_data.end_datetime,
         budget=trip_data.budget,
-        days=trip_data.days,
         trip_style=trip_data.trip_style,
         creator_id=current_user.id,
     )
