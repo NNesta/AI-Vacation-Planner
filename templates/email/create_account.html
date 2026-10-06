@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to AI Vacation Planner 🤗</title>
+  </head>
+
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f4f4;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      style="background-color: #f4f4f4; padding: 30px 0"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            width="600"
+            cellspacing="0"
+            cellpadding="0"
+            style="
+              background-color: #ffffff;
+              border-radius: 10px;
+              overflow: hidden;
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td
+                style="
+                  background-color: #527c9f;
+                  padding: 30px;
+                  text-align: center;
+                "
+              >
+                <h1 style="margin: 0; color: #ffffff; font-size: 28px">
+                  Welcome to AI Vacation Planner ✈️
+                </h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding: 40px 30px">
+                <h2 style="margin-top: 0; color: #333333; font-size: 22px">
+                  Hello {{ user_name }} 👋
+                </h2>
+
+                <p style="color: #555555; font-size: 16px; line-height: 1.7">
+                  Welcome to <strong>AI Vacation Planner</strong>. We are
+                  excited to have you on board 🎉
+                </p>
+
+                <p style="color: #555555; font-size: 16px; line-height: 1.7">
+                  Your account has been successfully created with the following
+                  email:
+                </p>
+
+                <div
+                  style="
+                    background-color: #f8f9fa;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin: 20px 0;
+                  "
+                >
+                  <p style="margin: 0; color: #333333; font-size: 15px">
+                    <strong>Email:</strong> {{ user_email }}
+                  </p>
+                </div>
+
+                <p style="color: #555555; font-size: 16px; line-height: 1.7">
+                  You can now start creating trips, generating AI-powered
+                  itineraries, and organizing your dream vacations.
+                </p>
+
+                <!-- Button -->
+                <table
+                  role="presentation"
+                  cellspacing="0"
+                  cellpadding="0"
+                  style="margin-top: 30px"
+                >
+                  <tr>
+                    <td align="center">
+                      <a
+                        href="{{ login_url }}"
+                        style="
+                          background-color: #527c9f;
+                          color: #ffffff;
+                          text-decoration: none;
+                          padding: 14px 28px;
+                          border-radius: 6px;
+                          display: inline-block;
+                          font-size: 16px;
+                          font-weight: bold;
+                        "
+                      >
+                        Get Started
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  background-color: #f8f9fa;
+                  padding: 20px 30px;
+                  text-align: center;
+                  border-top: 1px solid #eeeeee;
+                "
+              >
+                <p
+                  style="
+                    margin: 0;
+                    color: #999999;
+                    font-size: 12px;
+                    line-height: 1.6;
+                  "
+                >
+                  This is an automated message from AI Vacation Planner.
+                  <br />
+                  Please do not reply to this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
