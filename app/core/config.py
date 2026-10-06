@@ -42,5 +42,10 @@ class Settings(BaseSettings):
     # Nominatim's usage policy requires an identifying User-Agent.
     NOMINATIM_USER_AGENT: str = "ai-vacation-planner/0.1 (capstone project)"
 
+    STT_MODEL: str = "openai/whisper-base"
+    TTS_VOICE: str = "en-US-AriaNeural"
+    MAX_AUDIO_MB: int = 10
+    MAX_IMAGE_MB: int = 5
+
 
 settings = Settings()  # type: ignore[call-arg]

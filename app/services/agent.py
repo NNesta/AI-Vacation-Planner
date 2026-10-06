@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from base64 import b64encode
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage
@@ -10,7 +11,13 @@ from app.agents.graph import collect_tool_calls, final_text, get_agent_graph
 from app.core.config import settings
 
 
-async def chat(message: str, thread_id: str | None = None, trip_id: str | None = None) -> dict:
+async def chat(
+    message: str,
+    thread_id: str | None = None,
+    trip_id: str | None = None,
+    image: bytes | None = None,
+    image_type: str | None = None,
+) -> dict:
     """Send one turn to the agent and return its answer.
 
     ``thread_id`` identifies a conversation; pass the one returned by a previous
@@ -23,6 +30,11 @@ async def chat(message: str, thread_id: str | None = None, trip_id: str | None =
     content = message
     if trip_id:
         content = f"{message}\n\n(The trip this is about has id {trip_id}.)"
+    if image:
+        content = [
+            {"type": "image", "base64": b64encode(image).decode(), "mime_type": image_type},
+            {"type": "text", "text": content},
+        ]
 
     result = await get_agent_graph().ainvoke(
         {"messages": [HumanMessage(content=content)]},

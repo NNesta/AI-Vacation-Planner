@@ -36,6 +36,7 @@ from app.agents.prompts import (
 from app.agents.state import AgentState, ItineraryState
 from app.agents.tools import RESEARCH_TOOLS, load_trip
 from app.core.config import settings
+from app.mcp.client import get_mcp_tools
 from app.schemas.itinerary.itinerary_request import LLMItineraryResponse
 
 MAX_ACTIVITIES_PER_DAY = 6
@@ -43,14 +44,15 @@ MAX_ACTIVITIES_PER_DAY = 6
 
 def _build_research_agent() -> CompiledStateGraph:
     """A ReAct sub-graph limited to the fact-gathering tools."""
-    model = get_chat_model().bind_tools(RESEARCH_TOOLS)
+    tools = [*RESEARCH_TOOLS, *get_mcp_tools()]
+    model = get_chat_model().bind_tools(tools)
 
     async def agent(state: AgentState) -> dict:
         return {"messages": [await model.ainvoke(state["messages"])]}
 
     builder = StateGraph(AgentState)
     builder.add_node("agent", agent)
-    builder.add_node("tools", ToolNode(RESEARCH_TOOLS))
+    builder.add_node("tools", ToolNode(tools))
     builder.add_edge(START, "agent")
     builder.add_conditional_edges("agent", tools_condition, {"tools": "tools", END: END})
     builder.add_edge("tools", "agent")

@@ -23,6 +23,7 @@ from app.agents.llm import get_chat_model
 from app.agents.prompts import AGENT_SYSTEM_PROMPT, today_str
 from app.agents.state import AgentState
 from app.agents.tools import TRAVEL_TOOLS
+from app.mcp.client import get_mcp_tools
 
 
 def build_agent_graph(checkpointer=None) -> CompiledStateGraph:
@@ -31,7 +32,8 @@ def build_agent_graph(checkpointer=None) -> CompiledStateGraph:
     Pass a checkpointer to give the agent memory across turns; calls then need a
     ``thread_id`` in their config.
     """
-    model = get_chat_model().bind_tools(TRAVEL_TOOLS)
+    tools = [*TRAVEL_TOOLS, *get_mcp_tools()]
+    model = get_chat_model().bind_tools(tools)
 
     async def agent(state: AgentState) -> dict:
         # The system prompt is prepended per call rather than stored in state so
@@ -42,7 +44,7 @@ def build_agent_graph(checkpointer=None) -> CompiledStateGraph:
 
     builder = StateGraph(AgentState)
     builder.add_node("agent", agent)
-    builder.add_node("tools", ToolNode(TRAVEL_TOOLS))
+    builder.add_node("tools", ToolNode(tools))
 
     builder.add_edge(START, "agent")
     # tools_condition -> "tools" when the last message has tool calls, else END.
