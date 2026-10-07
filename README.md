@@ -6,6 +6,13 @@ An intelligent travel planning application that helps users create, manage, and 
 
 # Features
 
+- **Voice (phase 6):** create a trip by speaking, or talk to the agent and get
+  the answer back as speech — Whisper speech-to-text, Edge neural text-to-speech
+- **Image understanding (phase 6):** send a photo and the agent works out what
+  and where it is, then plans around it
+- **MCP tools (phase 6):** weather, maps and pricing are served by an MCP server
+  that the agent connects to as an MCP client — and that Claude Desktop or any
+  other MCP client can use too
 - **Tool-using AI agent (phase 5):** a LangGraph agent that decides which tools a
   request needs — travel knowledge base, weather, place lookup, distances, cost
   estimates, trip records — runs them, and answers from the results
@@ -27,6 +34,9 @@ An intelligent travel planning application that helps users create, manage, and 
 - **Framework:** FastAPI 0.136+
 - **Agent orchestration:** LangGraph 1.x + LangChain Core 1.x
 - **LLM:** Anthropic Claude (`claude-haiku-4-5`) via `langchain-anthropic`
+- **Tool protocol:** MCP — `mcp` Python SDK (FastMCP) + `langchain-mcp-adapters`
+- **Speech-to-text:** Whisper (`openai/whisper-base`) via `transformers`, decoded with ffmpeg
+- **Text-to-speech:** Microsoft Edge neural voices via `edge-tts`
 - **Vector store:** ChromaDB with `sentence-transformers` embeddings
 - **Database:** PostgreSQL with psycopg3
 - **ORM:** SQLAlchemy 2.0+ (async)
@@ -48,8 +58,12 @@ ai-vacation-planner/
 │   │   │   ├── trips.py     # Trip CRUD endpoints
 │   │   │   ├── itineraries.py # Itinerary + AI generation endpoints
 │   │   │   ├── agent.py     # PHASE 5: agent chat endpoint
+│   │   │   ├── multimodal.py # PHASE 6: voice + image endpoints
 │   │   │   └── users.py     # User endpoints
 │   │   └── router.py        # Main router configuration
+│   ├── mcp/                 # PHASE 6: Model Context Protocol
+│   │   ├── server.py        # MCP server exposing the travel tools
+│   │   └── client.py        # MCP client: connects at startup, loads tools for the agent
 │   ├── agents/              # PHASE 5: LangChain + LangGraph orchestration
 │   │   ├── graph.py         # ReAct agent graph (agent <-> tools loop)
 │   │   ├── itinerary_graph.py # Itinerary workflow graph
@@ -67,6 +81,7 @@ ai-vacation-planner/
 │   ├── ai/                  # PHASE 2-3 raw Anthropic SDK path; only the RAG
 │   │                        #   system prompt is still live (used by /ask)
 │   ├── utils/               # RAG plumbing: chunking, embeddings, vector store
+│   │   └── speech.py        # PHASE 6: speech-to-text + text-to-speech
 │   ├── core/                # Core configuration
 │   │   ├── config.py        # Settings and environment variables
 │   │   └── dependancies.py  # Dependency injection
@@ -86,11 +101,13 @@ ai-vacation-planner/
 │   │   ├── auth/            # Auth request/response schemas
 │   │   ├── trip/            # Trip schemas
 │   │   ├── itinerary/       # Itinerary schemas
+│   │   ├── multimodal/      # PHASE 6: spoken-trip extraction + voice responses
 │   │   └── user/            # User schemas
 │   ├── services/            # Business logic
 │   │   ├── auth.py          # Authentication service
 │   │   ├── trip.py          # Trip service
 │   │   ├── itinerary.py     # Itinerary service
+│   │   ├── multimodal.py    # PHASE 6: speech -> trip, speech -> agent -> speech
 │   │   └── user.py          # User service
 │   └── main.py              # FastAPI application entry point
 ├── alembic/                 # Database migrations
@@ -295,6 +312,218 @@ curl -X POST "http://localhost:8000/api/v1/agent/chat" \
 
 ---
 
+# Phase 6 — Multimodal AI & MCP
+
+## What changed
+
+Phase 5 took text in and gave text back, and every tool was a Python function
+imported straight into the agent. Phase 6 adds two things:
+
+1. **MCP (Model Context Protocol).** The tools that call outside travel
+   services — weather, maps, pricing — now live behind an MCP server. The agent
+   is an MCP client: it discovers those tools over the protocol at startup and
+   calls them through it.
+2. **Voice and images.** A traveller can create a trip by speaking, talk to the
+   agent and hear the answer, or send a photo and plan around it.
+
+```
+ speech ──► Whisper (STT) ──► transcript ──┐
+ photo  ───────────────────────────────────┼──► LangGraph agent (Claude) ──► answer ──► Edge TTS ──► MP3
+ text   ───────────────────────────────────┘           │
+                                                       ├── local tools: trip records (Postgres),
+                                                       │                knowledge base (Chroma)
+                                                       └── MCP client ══ stdio ══► MCP server (app/mcp/server.py)
+                                                                                   weather · places · distances · cost
+```
+
+## MCP
+
+### The server — `app/mcp/server.py`
+
+A FastMCP server (official `mcp` Python SDK) named `vacation-planner-travel`,
+exposing the tools that talk to external services:
+
+| MCP tool | Backed by |
+|----------|-----------|
+| `get_weather_forecast` | Open-Meteo forecast + archive |
+| `find_places` | OpenStreetMap Nominatim |
+| `get_distance_between` | Open-Meteo geocoding + haversine |
+| `estimate_trip_cost` | Local cost model |
+
+Each tool still has a single definition: the phase 5 LangChain tools are
+converted with `langchain_mcp_adapters.tools.to_fastmcp`, so the name,
+description and JSON schema an MCP client sees are exactly what the agent saw
+before.
+
+The tools that read the app's own data — `get_trip_details`,
+`get_saved_itinerary` and `search_travel_knowledge` — stay in-process. They need
+the database and the 90 MB embedding model, which belong to the API process.
+
+### The client — `app/mcp/client.py`
+
+`MCP_SERVERS` lists the servers the agent connects to. At startup the FastAPI
+`lifespan` opens one persistent session per server
+(`MultiServerMCPClient.session` + `load_mcp_tools`), so tool calls go over an
+open pipe instead of starting the server for every call. The MCP tools are bound
+next to the local ones in both graphs:
+
+```python
+tools = [*TRAVEL_TOOLS, *get_mcp_tools()]    # app/agents/graph.py
+tools = [*RESEARCH_TOOLS, *get_mcp_tools()]  # app/agents/itinerary_graph.py (research step)
+```
+
+Stopping the API closes the session and the server process with it.
+
+Connecting another MCP server — a calendar, a booking service, a hosted maps
+server — is one more entry in `MCP_SERVERS`; every tool it exposes reaches the
+agent without touching the graphs.
+
+### Using the travel tools from other MCP clients
+
+It is a standard MCP server, so any MCP client can use it. For example, in
+Claude Desktop's `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "vacation-planner-travel": {
+      "command": "uv",
+      "args": [
+        "--directory", "/absolute/path/to/AI-Vacation-Planner",
+        "run", "python", "-m", "app.mcp.server"
+      ]
+    }
+  }
+}
+```
+
+The server reads the same `.env` as the API, which is why it is started from
+the project directory.
+
+## Voice
+
+### Speech-to-text
+
+- **Whisper** (`openai/whisper-base`, set by `STT_MODEL`) runs locally through
+  Hugging Face `transformers` — no API key, and the audio never leaves the
+  server.
+- Uploads are decoded by **ffmpeg** into 16 kHz mono audio, so WAV, MP3, M4A
+  (phone voice memos), OGG/Opus and WebM recordings all work.
+- Transcription runs in a worker thread (`anyio.to_thread.run_sync`), like the
+  other blocking ML code. The model loads on the first voice request (about
+  290 MB is downloaded the first time).
+
+### Text-to-speech
+
+- **Microsoft Edge neural voices** through `edge-tts` — keyless, like the other
+  external services — returning MP3. The voice is set by `TTS_VOICE` (default
+  `en-US-AriaNeural`).
+- Voice questions reach the agent with `SPOKEN_REPLY_PROMPT` attached: the reply
+  will be read aloud, so it must be plain sentences with no markdown, lists or
+  links, under about 250 words.
+
+### Create a trip by voice — `POST /api/v1/multimodal/voice/trips`
+
+```
+audio ─► Whisper ─► transcript ─► Claude structured output (SpokenTripDetails) ─► CreateTripRequest ─► trips table
+```
+
+1. The transcript goes to Claude with
+   `with_structured_output(SpokenTripDetails)`, which also resolves relative
+   dates ("next Friday", "five days from 12 March") against today.
+2. Destination, start date and end date are required. When the recording does
+   not give them, the endpoint returns **422** with the transcript and the
+   `missing` fields instead of guessing.
+3. The result goes through the same `CreateTripRequest` validation as the
+   manual endpoint (future dates, end after start) and is saved for the
+   logged-in user.
+
+### Talk to the agent — `POST /api/v1/multimodal/voice/chat`
+
+Speech in, speech out. The transcript is sent to the same agent as
+`/agent/chat` — so it can read trips, search the knowledge base and call the MCP
+tools — and the answer comes back as an MP3 file. The rest is in the headers:
+
+| Header | Meaning |
+|--------|---------|
+| `X-Thread-Id` | Pass back as `thread_id` to continue the conversation, by voice or text |
+| `X-Transcript` | What Whisper heard (URL-encoded) |
+| `X-Tools-Used` | Tools the agent called this turn |
+
+## Image understanding — `POST /api/v1/multimodal/image/chat`
+
+Upload a photo (JPEG, PNG, GIF or WebP, up to 5 MB) with an optional question.
+The photo joins the agent's turn as an image content block, which
+`ChatAnthropic` sends to Claude as a base64 image. Claude works out what and
+where it shows, then the agent uses its tools on that — for a photo of Belém
+Tower: Lisbon's weather, nearby places, the cost of a short stay. The photo
+stays in the conversation thread, so follow-up questions can refer to it.
+
+## LLM integration details (phase 6)
+
+| Capability | Model / service | Where |
+|------------|-----------------|-------|
+| Agent reasoning, tool choice, image understanding | Claude (`settings.LLM_MODEL`) via `ChatAnthropic` | `app/agents/graph.py` |
+| Trip extraction from speech | Claude, `temperature=0`, `.with_structured_output(SpokenTripDetails)` | `app/services/multimodal.py` |
+| Speech-to-text | Whisper `openai/whisper-base`, local, via `transformers` | `app/utils/speech.py` |
+| Text-to-speech | Microsoft Edge neural TTS via `edge-tts` | `app/utils/speech.py` |
+| Tool protocol | MCP over stdio — `mcp` (FastMCP) + `langchain-mcp-adapters` | `app/mcp/` |
+
+The Claude API neither accepts nor produces audio, so speech is handled by
+Whisper and Edge TTS on either side of the agent.
+
+## Examples
+
+Create a trip by speaking:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/multimodal/voice/trips" \
+  -H "Authorization: Bearer <your-token>" \
+  -F "audio=@trip-request.m4a"
+```
+
+```json
+{
+  "transcript": "I want to plan a trip to Lisbon from the 12th to the 16th of November with a budget of $1,500. I love food markets and old neighborhoods.",
+  "trip": {
+    "id": "807a2aaf-...",
+    "title": "Lisbon food and neighborhoods",
+    "description": "A food-focused trip to Lisbon exploring markets and historic neighborhoods.",
+    "destination": "Lisbon",
+    "budget": "1500.0",
+    "start_datetime": "2026-11-12T09:00:00Z",
+    "end_datetime": "2026-11-16T18:00:00Z",
+    "message": "Trip created successfully"
+  }
+}
+```
+
+Ask a question out loud and save the spoken answer:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/multimodal/voice/chat" \
+  -F "audio=@question.m4a" \
+  -D headers.txt -o answer.mp3
+```
+
+Ask about a photo:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/multimodal/image/chat" \
+  -F "image=@belem.jpg" \
+  -F "message=Where is this? I have 2 days there next week on a tight budget."
+```
+
+```json
+{
+  "thread_id": "2a7f8ca3-...",
+  "answer": "... Belém Tower, in Lisbon's Belém district ...",
+  "tools_used": ["search_travel_knowledge", "estimate_trip_cost", "get_weather_forecast"]
+}
+```
+
+---
+
 # Setup Instructions
 
 ## Prerequisites
@@ -302,6 +531,7 @@ curl -X POST "http://localhost:8000/api/v1/agent/chat" \
 - Python 3.12+
 - PostgreSQL 14+
 - uv package manager
+- ffmpeg, for the voice endpoints (`brew install ffmpeg` / `apt install ffmpeg`)
 
 ---
 
@@ -350,7 +580,9 @@ uv run fastapi dev app/main.py
 ```
 
 First start downloads the sentence-transformers embedding model (~90 MB) and
-compiles both LangGraph graphs, so it takes a few seconds.
+compiles both LangGraph graphs, so it takes a few seconds. Startup also launches
+the MCP travel server as a subprocess; it stops with the API. The Whisper model
+(~290 MB) is downloaded on the first voice request.
 
 ---
 
@@ -382,10 +614,17 @@ ITINERARY_MAX_REVISIONS=2
 
 # --- RAG ---
 EMBEDDING_MODEL=all-MiniLM-L6-v2
+
+# --- Multimodal (phase 6) ---
+STT_MODEL=openai/whisper-base
+TTS_VOICE=en-US-AriaNeural
+MAX_AUDIO_MB=10
+MAX_IMAGE_MB=5
 ```
 
 `ANTHROPIC_API_KEY` is the only credential the AI features need — the weather,
-maps and pricing tools use keyless APIs.
+maps and pricing tools use keyless APIs, speech-to-text runs locally and the
+text-to-speech voices are keyless.
 
 ---
 
@@ -430,6 +669,16 @@ maps and pricing tools use keyless APIs.
 | Method | Endpoint              | Description                                      |
 | ------ | --------------------- | ------------------------------------------------ |
 | POST   | `/api/v1/agent/chat`  | Ask the tool-using agent; returns `tools_used`    |
+
+---
+
+## Multimodal (phase 6)
+
+| Method | Endpoint                             | Description                                        |
+| ------ | ------------------------------------ | -------------------------------------------------- |
+| POST   | `/api/v1/multimodal/voice/trips`     | Create a trip from a voice recording (auth)        |
+| POST   | `/api/v1/multimodal/voice/chat`      | Spoken question in, spoken MP3 answer out          |
+| POST   | `/api/v1/multimodal/image/chat`      | Ask the agent about a photo                        |
 
 ---
 

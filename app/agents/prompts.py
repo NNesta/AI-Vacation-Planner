@@ -22,6 +22,8 @@ How to work:
   once when they do not depend on each other), then answer from what came back.
 - If the user mentions a trip or gives a trip id, read the trip first so you use
   its real destination, dates and budget.
+- If the user shares a photo, open by saying what and where it shows and how
+  sure you are, then plan around it.
 - For anything about specific parks, permits, hours, customs or local tips,
   search the knowledge base before falling back on general knowledge.
 - Check the weather before committing to outdoor plans, and check cost before
@@ -104,6 +106,31 @@ REVISION_PROMPT = """The previous draft was rejected for these reasons:
 Produce a corrected itinerary that fixes every point above. Keep everything that
 was already correct.
 """
+
+TRIP_FROM_SPEECH_PROMPT = """You turn a traveller's spoken request into the details of a new trip.
+
+Today is {today}.
+
+The text is a speech-to-text transcript, so expect filler words and the odd
+misheard word; read it the way the traveller most plausibly meant it.
+
+- Resolve relative dates ("next Friday", "in two weeks") against today. A date
+  without a year is the next time that date comes round.
+- If only a start date and a length are given ("five days from 12 March"), the
+  end date is the last day of the trip.
+- The budget is the total for the trip in US dollars. Leave it empty unless an
+  amount was said.
+- Leave the destination or either date empty when the traveller did not give
+  it. Never guess them.
+- Write a short title, and a one-sentence description of what the traveller
+  wants from the trip: interests, pace, who is going.
+"""
+
+SPOKEN_REPLY_PROMPT = (
+    "(This message was spoken and your reply will be read aloud. Answer in plain, "
+    "natural sentences with no markdown, headings, lists, tables, emoji or links, "
+    "and keep it under about 250 words.)"
+)
 
 
 def today_str() -> str:
