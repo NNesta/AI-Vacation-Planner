@@ -14,6 +14,7 @@ class Location(BaseModel):
         description="Physical address or location details that help travelers find the place.",
     )
 
+
 class AskRequest(BaseModel):
     query: str = Field(..., min_length=1, description="The traveler's question")
     top_k: int | None = Field(None, ge=1, le=10)
@@ -24,9 +25,6 @@ class SourceOut(BaseModel):
     destination: str
     distance: float
     snippet: str
-
-
-
 
 
 class Activity(BaseModel):
@@ -114,7 +112,7 @@ class CreateItineraryRequest(BaseModel):
 def validate_with_model(data_model, llm_response):
     try:
         validated_data = data_model.model_validate_json(llm_response)
-        print("Data were validated successfully")
+
         print(validated_data.model_dump_json(indent=2))
         return validated_data, None
     except ValidationError as e:
