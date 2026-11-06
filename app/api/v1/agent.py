@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.agents.guardrails import GUARDRAIL_RESPONSES
 from app.schemas.agent import ChatRequest, ChatResponse
 from app.services import agent_services
 
@@ -9,6 +10,7 @@ router = APIRouter()
 @router.post(
     "/chat",
     response_model=ChatResponse,
+    responses=GUARDRAIL_RESPONSES,
     summary="Ask the tool-using travel agent",
     description=(
         "Sends a message to the LangGraph agent. The agent decides which tools to "

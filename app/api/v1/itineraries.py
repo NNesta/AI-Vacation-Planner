@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, status
 
+from app.agents.guardrails import GUARDRAIL_RESPONSES, check_input
 from app.db.session import DbSession
 from app.schemas.agent import GenerateItineraryRequest, GeneratedItineraryResponse
 from app.schemas.itinerary.itinerary_request import (
@@ -32,12 +33,14 @@ async def create_itinerary(itinerary_data: CreateItineraryRequest, db: DbSession
 @router.post(
     "/generate/{trip_id}",
     response_model=GeneratedItineraryResponse,
+    responses=GUARDRAIL_RESPONSES,
     summary="Generate an itinerary with the AI agent",
     description=(
         "Runs the LangGraph itinerary workflow: the trip is loaded, a research "
         "agent decides which tools to call (knowledge base, weather, places, "
         "cost), a structured itinerary is drafted from the findings, reviewed "
-        "against the trip's dates and budget, re-drafted if it fails, and saved."
+        "against the trip's dates, re-drafted if it fails, and saved only once it "
+        "passes. `evaluation` reports automatic quality checks on the result."
     ),
 )
 async def generate_itinerary(
@@ -77,6 +80,7 @@ async def get_trip_itineraries(trip_id: UUID, db: DbSession):
 @router.post(
     "/ask",
     response_model=AskResponse,
+    responses=GUARDRAIL_RESPONSES,
     summary="Ask the knowledge base directly (phase 4 RAG)",
     description=(
         "Straight retrieve-then-answer over the travel knowledge base, with no "
@@ -84,6 +88,7 @@ async def get_trip_itineraries(trip_id: UUID, db: DbSession):
     ),
 )
 def ask(req: AskRequest, request: Request):
+    check_input(req.query)
     collection = request.app.state.collection
     result: RagResult = answer_question(collection, req.query, top_k=req.top_k or TOP_K)
 

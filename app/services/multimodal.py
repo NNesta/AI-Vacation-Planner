@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.guardrails import check_input
 from app.agents.llm import get_chat_model
 from app.agents.prompts import SPOKEN_REPLY_PROMPT, TRIP_FROM_SPEECH_PROMPT, today_str
 from app.models.user import User
@@ -38,6 +39,7 @@ async def _transcribe(audio: bytes) -> str:
 
 async def create_trip_from_speech(audio: bytes, db: AsyncSession, current_user: User) -> dict:
     transcript = await _transcribe(audio)
+    check_input(transcript)
 
     extractor = get_chat_model(temperature=0).with_structured_output(SpokenTripDetails)
     details = await extractor.ainvoke(

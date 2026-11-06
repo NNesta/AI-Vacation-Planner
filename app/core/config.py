@@ -47,5 +47,11 @@ class Settings(BaseSettings):
     MAX_AUDIO_MB: int = 10
     MAX_IMAGE_MB: int = 5
 
+    # --- Observability (phase 7): Datadog stays off until DD_API_KEY is set ---
+    DD_API_KEY: SecretStr | None = None
+    DD_SITE: str = "datadoghq.com"
+    DD_ENV: str = "dev"
+    DD_LLMOBS_ML_APP: str = "ai-vacation-planner"
+
 
 settings = Settings()  # type: ignore[call-arg]

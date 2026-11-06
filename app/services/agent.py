@@ -8,6 +8,7 @@ from uuid import uuid4
 from langchain_core.messages import HumanMessage
 
 from app.agents.graph import collect_tool_calls, final_text, get_agent_graph
+from app.agents.guardrails import check_input, check_output
 from app.core.config import settings
 
 
@@ -23,6 +24,7 @@ async def chat(
     ``thread_id`` identifies a conversation; pass the one returned by a previous
     call to continue it, or omit it to start fresh.
     """
+    check_input(message)
     thread_id = thread_id or str(uuid4())
 
     # Trip context goes in the user turn, so the agent can decide for itself
@@ -49,7 +51,7 @@ async def chat(
 
     return {
         "thread_id": thread_id,
-        "answer": final_text(result["messages"]),
+        "answer": check_output(final_text(result["messages"])),
         "tools_used": collect_tool_calls(new_messages),
     }
 

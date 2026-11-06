@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
 
+from app.agents.guardrails import GUARDRAIL_RESPONSES
 from app.core.config import settings
 from app.core.dependancies import CurrentUser
 from app.db.session import DbSession
@@ -35,6 +36,7 @@ async def _read(upload: UploadFile, max_mb: int) -> bytes:
     "/voice/trips",
     response_model=VoiceTripResponse,
     status_code=status.HTTP_201_CREATED,
+    responses=GUARDRAIL_RESPONSES,
     summary="Create a trip by voice",
     description=(
         "Upload a recording (WAV, MP3, M4A, OGG or WebM) of the traveller "
@@ -62,7 +64,8 @@ async def create_trip_by_voice(
         200: {
             "content": {"audio/mpeg": {}},
             "description": "The agent's answer, spoken, as an MP3 file.",
-        }
+        },
+        **GUARDRAIL_RESPONSES,
     },
     summary="Talk to the travel agent and hear the answer",
     description=(
@@ -98,6 +101,7 @@ async def voice_chat(
 @router.post(
     "/image/chat",
     response_model=ChatResponse,
+    responses=GUARDRAIL_RESPONSES,
     summary="Ask the travel agent about a photo",
     description=(
         "Upload a JPEG, PNG, GIF or WebP photo with an optional question. Claude "

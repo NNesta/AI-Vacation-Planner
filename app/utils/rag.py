@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import perf_counter
 
 import anthropic
 
+from app.core.observability import logger
 from app.utils.config import (
     ANTHROPIC_API_KEY,
     CLAUDE_MAX_TOKENS,
@@ -81,11 +83,19 @@ def answer_question(collection, question: str, top_k: int = TOP_K) -> RagResult:
         used_context = False
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    started = perf_counter()
     response = client.messages.create(
         model=CLAUDE_MODEL,
         max_tokens=CLAUDE_MAX_TOKENS,
         system=RAG_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
+    )
+    logger.info(
+        "llm_call model=%s latency_ms=%d input_tokens=%s output_tokens=%s",
+        response.model,
+        round((perf_counter() - started) * 1000),
+        response.usage.input_tokens,
+        response.usage.output_tokens,
     )
     answer_text = "".join(
         block.text for block in response.content if block.type == "text"

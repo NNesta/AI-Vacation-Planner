@@ -76,7 +76,7 @@ def _research_brief(trip: dict, user_request: str | None) -> str:
     return "\n".join(lines)
 
 
-def _review(trip: dict, days: list[dict]) -> list[str]:
+def review_itinerary(trip: dict, days: list[dict]) -> list[str]:
     """Business rules the Pydantic schema cannot check. Returns complaints."""
     issues: list[str] = []
     expected = trip["days"]
@@ -204,7 +204,7 @@ def build_itinerary_graph() -> CompiledStateGraph:
     async def review(state: ItineraryState) -> dict:
         if state.get("error"):
             return {}
-        return {"issues": _review(state["trip"], state.get("itinerary") or [])}
+        return {"issues": review_itinerary(state["trip"], state.get("itinerary") or [])}
 
     def after_load(state: ItineraryState) -> str:
         return END if state.get("error") else "research"
@@ -215,9 +215,9 @@ def build_itinerary_graph() -> CompiledStateGraph:
         if not state.get("issues"):
             return "persist" if state.get("save") else END
         if state.get("attempts", 0) > settings.ITINERARY_MAX_REVISIONS:
-            # Out of revisions: keep the best draft and report what is wrong
-            # rather than failing the request outright.
-            return "persist" if state.get("save") else END
+            # Out of revisions: return the draft with its issues, but never
+            # save an itinerary that failed review.
+            return END
         return "draft"
 
     async def persist(state: ItineraryState) -> dict:
