@@ -14,16 +14,15 @@ TRAVEL_TOOLS = [
     get_trip_details,
     get_saved_itinerary,
     search_travel_knowledge,
-    get_weather_forecast,
-    find_places,
-    get_distance_between,
-    estimate_trip_cost,
 ]
 
 # Subset used by the itinerary workflow's research step: reading a trip is done
 # deterministically there, so those tools are left out.
 RESEARCH_TOOLS = [
     search_travel_knowledge,
+]
+
+MCP_TOOLS = [
     get_weather_forecast,
     find_places,
     get_distance_between,
@@ -33,6 +32,7 @@ RESEARCH_TOOLS = [
 __all__ = [
     "TRAVEL_TOOLS",
     "RESEARCH_TOOLS",
+    "MCP_TOOLS",
     "load_trip",
     "search_travel_knowledge",
     "get_weather_forecast",
