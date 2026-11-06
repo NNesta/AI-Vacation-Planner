@@ -11,6 +11,7 @@ from functools import lru_cache
 from langchain_anthropic import ChatAnthropic
 
 from app.core.config import settings
+from app.core.observability import llm_call_logger
 
 
 @lru_cache(maxsize=4)
@@ -30,4 +31,5 @@ def get_chat_model(
         max_tokens=settings.LLM_MAX_TOKENS if max_tokens is None else max_tokens,
         timeout=None,
         stop=None,
+        callbacks=[llm_call_logger],
     )

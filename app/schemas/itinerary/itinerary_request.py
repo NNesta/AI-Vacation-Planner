@@ -16,7 +16,7 @@ class Location(BaseModel):
 
 
 class AskRequest(BaseModel):
-    query: str = Field(..., min_length=1, description="The traveler's question")
+    query: str = Field(..., min_length=1, max_length=4000, description="The traveler's question")
     top_k: int | None = Field(None, ge=1, le=10)
 
 

@@ -206,3 +206,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 app/data/chroma_db/
+
+.claude/
+.deepeval/

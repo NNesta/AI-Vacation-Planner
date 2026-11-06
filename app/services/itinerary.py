@@ -11,6 +11,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.evaluation import evaluate_itinerary
+from app.agents.guardrails import check_input
 from app.agents.itinerary_graph import get_itinerary_graph
 from app.db.session import async_session_local
 from app.models.activity import Activity
@@ -100,6 +102,8 @@ async def generate_itineraries(
     """
     from app.core.config import settings
 
+    check_input(user_request)
+
     final_state = await get_itinerary_graph().ainvoke(
         {
             "trip_id": str(trip_id),
@@ -109,12 +113,18 @@ async def generate_itineraries(
         {"recursion_limit": settings.AGENT_RECURSION_LIMIT * 2},
     )
 
+    itinerary = final_state.get("itinerary") or []
+    trip = final_state.get("trip")
+
     return {
         "trip_id": trip_id,
-        "itinerary": final_state.get("itinerary") or [],
+        "itinerary": itinerary,
         "tools_used": final_state.get("tools_used") or [],
         "research": final_state.get("research"),
         "issues": final_state.get("issues") or [],
         "saved": bool(final_state.get("saved")),
         "error": final_state.get("error"),
+        "evaluation": evaluate_itinerary(trip, itinerary, user_request)
+        if trip and itinerary
+        else None,
     }

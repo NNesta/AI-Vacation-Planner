@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.agents.graph import get_agent_graph
 from app.agents.itinerary_graph import get_itinerary_graph
 from app.api.router import api_router_v1
+from app.core.observability import observe_requests, setup_observability
 from app.mcp.client import connect_mcp
 from app.utils.vector_store import get_collection, load_embedding_function
 
@@ -24,6 +25,12 @@ served by an MCP server (`app/mcp/server.py`) that the agent connects to as an
 MCP client. The `/api/v1/multimodal` endpoints add voice and image input:
 create a trip by speaking, talk to the agent and get a spoken answer back, or
 ask about a photo.
+
+**Phase 7 — Evaluation, security & testing.** Requests that try to override the
+assistant's instructions or ask for unsupported actions get a `400`. Generated
+itineraries carry an `evaluation` block and are saved only if they pass review.
+Latency, tokens, model, errors and failed requests are logged and sent to
+Datadog LLM Observability when `DD_API_KEY` is set.
 """
 
 
@@ -39,10 +46,12 @@ async def lifespan(app: FastAPI):
         yield
 
 
+setup_observability()
+
 app = FastAPI(
     title="AI Vacation Planner API",
     description=DESCRIPTION,
-    version="0.6.0",
+    version="0.7.0",
     lifespan=lifespan,
 )
 app.add_middleware(
@@ -52,4 +61,5 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
+app.middleware("http")(observe_requests)
 app.include_router(api_router_v1)

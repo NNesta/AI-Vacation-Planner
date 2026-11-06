@@ -5,6 +5,18 @@ from pydantic import BaseModel, Field
 from app.schemas.itinerary.itinerary_request import Itinerary
 
 
+class ItineraryEvaluation(BaseModel):
+    valid_format: bool = Field(description="The itinerary matches the expected schema.")
+    complete: bool = Field(
+        description="Every trip day is covered, with correct dates and activities."
+    )
+    relevant: bool = Field(
+        description="It mentions the destination and reflects the traveller's request."
+    )
+    score: float = Field(ge=0, le=1, description="Share of the three checks that passed.")
+    problems: list[str] = Field(default_factory=list)
+
+
 class ChatResponse(BaseModel):
     thread_id: str = Field(description="Pass this back to continue the conversation.")
     answer: str
@@ -25,7 +37,10 @@ class GeneratedItineraryResponse(BaseModel):
     )
     issues: list[str] = Field(
         default_factory=list,
-        description="Review problems still outstanding after the revision budget ran out.",
+        description="Review problems left after the revision budget ran out. An itinerary with issues is never saved.",
     )
     saved: bool = Field(description="Whether the itinerary was written to the database.")
     error: str | None = None
+    evaluation: ItineraryEvaluation | None = Field(
+        default=None, description="Automatic quality checks on the generated itinerary."
+    )

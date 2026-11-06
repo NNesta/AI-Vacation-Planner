@@ -12,6 +12,7 @@ import anyio
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
+from app.agents.guardrails import sanitize_untrusted
 from app.utils.config import MAX_RELEVANT_DISTANCE, TOP_K
 from app.utils.rag import RetrievedChunk, retrieve
 from app.utils.vector_store import get_collection, load_embedding_function
@@ -67,7 +68,7 @@ async def search_travel_knowledge(query: str, top_k: int = TOP_K) -> dict:
             "destination": chunk.destination,
             "source": chunk.source,
             "relevance": round(1.0 - chunk.distance, 3),
-            "text": (
+            "text": sanitize_untrusted(
                 chunk.text[:SNIPPET_CHARS] + "..."
                 if len(chunk.text) > SNIPPET_CHARS
                 else chunk.text

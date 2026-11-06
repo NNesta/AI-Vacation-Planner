@@ -6,6 +6,15 @@ An intelligent travel planning application that helps users create, manage, and 
 
 # Features
 
+- **Guardrails (phase 7):** prompt injection and unsupported actions are blocked
+  before the model runs, stored text is sanitised, and answers that leak the
+  system prompt are replaced
+- **Itinerary evaluation (phase 7):** every generated itinerary is scored for
+  format, completeness and relevance, with DeepEval tests over a golden dataset
+- **Automated tests (phase 7):** API, workflow, structured output, guardrail and
+  observability tests with `pytest`
+- **Observability (phase 7):** latency, tokens, model, errors and failed requests
+  are logged and sent to Datadog LLM Observability
 - **Voice (phase 6):** create a trip by speaking, or talk to the agent and get
   the answer back as speech — Whisper speech-to-text, Edge neural text-to-speech
 - **Image understanding (phase 6):** send a photo and the agent works out what
@@ -43,6 +52,9 @@ An intelligent travel planning application that helps users create, manage, and 
 - **Authentication:** JWT (PyJWT) with pwdlib (Argon2)
 - **Migrations:** Alembic
 - **Validation:** Pydantic v2
+- **Testing:** pytest, pytest-asyncio, httpx
+- **LLM evaluation:** DeepEval
+- **Observability:** Datadog LLM Observability via `ddtrace`
 - **Python:** 3.12+
 
 ---
@@ -68,7 +80,9 @@ ai-vacation-planner/
 │   │   ├── graph.py         # ReAct agent graph (agent <-> tools loop)
 │   │   ├── itinerary_graph.py # Itinerary workflow graph
 │   │   ├── llm.py           # ChatAnthropic factory
-│   │   ├── prompts.py       # System prompts
+│   │   ├── prompts.py       # System prompts + shared security rules
+│   │   ├── guardrails.py    # PHASE 7: input, stored-text and output checks
+│   │   ├── evaluation.py    # PHASE 7: itinerary quality checks
 │   │   ├── state.py         # TypedDict graph states
 │   │   └── tools/           # The agent's tools
 │   │       ├── trips.py     #   trip record lookup (database)
@@ -84,6 +98,7 @@ ai-vacation-planner/
 │   │   └── speech.py        # PHASE 6: speech-to-text + text-to-speech
 │   ├── core/                # Core configuration
 │   │   ├── config.py        # Settings and environment variables
+│   │   ├── observability.py # PHASE 7: logging + Datadog LLM Observability
 │   │   └── dependancies.py  # Dependency injection
 │   ├── db/                  # Database configuration
 │   │   ├── base.py          # SQLAlchemy base
@@ -111,6 +126,8 @@ ai-vacation-planner/
 │   │   └── user.py          # User service
 │   └── main.py              # FastAPI application entry point
 ├── alembic/                 # Database migrations
+├── tests/                   # PHASE 7: fast pytest suite (no LLM calls)
+├── evals/                   # PHASE 7: DeepEval tests + golden dataset (calls Claude)
 ├── .env                     # Environment variables
 ├── pyproject.toml           # Project dependencies
 └── README.md                # This file
@@ -219,8 +236,8 @@ START -> load_trip -> research -> draft -> review -+-> persist -> END
 
 `review` routes back to `draft` with the specific complaints attached, up to
 `ITINERARY_MAX_REVISIONS` times. When the revision budget runs out the best
-draft is still returned, with the outstanding problems reported in `issues`
-rather than failing the request.
+draft is still returned, with the outstanding problems reported in `issues`, but
+it is not saved.
 
 Exposed as **`POST /api/v1/itineraries/generate/{trip_id}`**.
 
@@ -524,6 +541,172 @@ curl -X POST "http://localhost:8000/api/v1/multimodal/image/chat" \
 
 ---
 
+# Phase 7 — Evaluation, Security & Testing
+
+## What changed
+
+```
+request ─► input guardrail ─► agent / workflow ─► output guardrail ─► response
+              │ 400                  │                  │
+              ▼                      ├─ security rules in every system prompt
+        no tokens spent              ├─ stored text sanitised before prompting
+                                     └─ itinerary: review ─► evaluation ─► save if valid
+
+every request and LLM call ─► logs, plus Datadog when DD_API_KEY is set
+```
+
+## Security and guardrails
+
+Protection comes in layers, because a pattern list alone cannot stop every attack.
+
+| Layer | What it does | Where |
+|-------|--------------|-------|
+| Input check | Returns `400` for prompt injection and unsupported actions, before any tokens are spent. Unicode tricks and zero-width characters are normalised first. | `check_input` in `app/agents/guardrails.py` |
+| Stored text | Replaces injected text in trip titles, trip descriptions and knowledge-base passages, so saved data cannot instruct the model. | `sanitize_untrusted` |
+| System prompts | `SECURITY_RULES` tells every prompt that user and tool content is data, and restricts the model to travel planning without bookings or payments. This covers what the patterns miss, including text inside images. | `app/agents/prompts.py` |
+| Output check | Replaces an answer that repeats a system prompt or contains an Anthropic API key. | `check_output` |
+| Tool allow-list | The agent only has read-only tools, so it has no way to book, pay or change data. A test keeps this list fixed. | `app/agents/tools/__init__.py` |
+| Invalid itineraries | Structured output rejects malformed drafts, and an itinerary that fails review is never saved. | `app/agents/itinerary_graph.py` |
+
+The input check covers `/agent/chat`, `/itineraries/generate/{trip_id}`,
+`/itineraries/ask` and all three `/multimodal` endpoints, including spoken
+transcripts. A blocked request looks like this:
+
+```json
+{
+  "detail": {
+    "code": "prompt_injection",
+    "message": "This request was blocked because it tries to change the assistant's instructions."
+  }
+}
+```
+
+`code` is `prompt_injection` or `unsupported_action`.
+
+## Evaluation approach
+
+Evaluation runs at two levels.
+
+**On every generation.** `POST /itineraries/generate/{trip_id}` returns an
+`evaluation` block from `app/agents/evaluation.py`. These checks are
+deterministic, so they are free and instant:
+
+| Field | Question it answers | How |
+|-------|---------------------|-----|
+| `valid_format` | Does the output follow the expected format? | Validates against `LLMItineraryResponse` |
+| `complete` | Is the itinerary complete? | The same rules as `review`: every day present, correct dates, activities on each day, sensible times |
+| `relevant` | Is it relevant to the request? | Mentions the destination and at least one keyword from the request |
+| `score` | How many passed? | Share of the three checks, from 0 to 1 |
+| `problems` | What is wrong? | Plain-language list |
+
+```json
+"evaluation": {
+  "valid_format": true,
+  "complete": true,
+  "relevant": true,
+  "score": 1.0,
+  "problems": []
+}
+```
+
+Keyword matching is only a rough signal for relevance, so the deeper judgement
+is left to DeepEval.
+
+**On demand, with DeepEval.** `evals/` runs the real workflow with live tools and
+has Claude judge the results against `evals/golden_dataset.json`. The trips come
+from the dataset, so no database is needed and nothing is saved.
+
+| Metric | Measures | Threshold |
+|--------|----------|-----------|
+| `AnswerRelevancyMetric` | The itinerary answers what was asked | 0.7 |
+| `FaithfulnessMetric` | Claims are supported by the research brief, which catches hallucinations | 0.7 |
+| `GEval` Completeness | Every day is covered and the golden expectation is met | 0.7 |
+| `GEval` Safety | The model refuses attacks that get past the input check | 0.7 |
+
+The golden dataset holds four trips (three from the knowledge base, one outside
+it), seven attacks the input check must stop, and five attacks only the model
+can refuse.
+
+```bash
+uv run deepeval test run evals/
+```
+
+This calls Claude and the live travel tools, so it costs tokens and needs the
+knowledge base to be ingested. The judge uses `settings.LLM_MODEL`.
+
+## Testing strategy
+
+```bash
+uv run pytest
+```
+
+The suite in `tests/` runs in seconds and makes no LLM or network calls.
+`FakeChatModel` replays scripted responses through the real graphs, so routing,
+revision loops and tool execution are all tested for real.
+
+| File | Covers |
+|------|--------|
+| `test_auth_api.py`, `test_trips_api.py` | Backend endpoints, auth and permissions |
+| `test_itineraries_api.py`, `test_agent_api.py`, `test_multimodal_api.py` | AI endpoints, status codes and guardrails on each route |
+| `test_itinerary_workflow.py` | Generation flow: research, draft, revision, saving, rejection |
+| `test_structured_output.py` | Schema validation and review rules |
+| `test_evaluation.py` | AI evaluation cases, good and bad |
+| `test_guardrails.py` | Attacks that must be blocked and normal questions that must pass |
+| `test_observability.py` | Logged metrics and Datadog start-up |
+
+Tests need PostgreSQL running. They use a separate `<your database>_test`
+database that is created automatically and emptied between tests, so your
+development data is never touched. Postgres is used instead of SQLite because
+the models rely on `JSONB` and native UUIDs.
+
+## Observability
+
+Five things are monitored, on two channels:
+
+| Signal | Logs | Datadog LLM Observability |
+|--------|------|---------------------------|
+| Latency | `latency_ms` per request and LLM call | Span durations |
+| Token usage | `input_tokens`, `output_tokens` | Token metrics on each LLM span |
+| Model used | `model=` | `model_name` on each LLM span |
+| Errors | `llm_error`, `guardrail_blocked` | Spans with `status: error` |
+| Failed requests | `http_request` at WARNING or ERROR | AI route spans tagged `http.status_code` |
+
+```
+INFO llm_call model=claude-haiku-4-5-20251001 latency_ms=2711 input_tokens=2750 output_tokens=94
+INFO http_request method=POST path=/api/v1/agent/chat status=200 latency_ms=4299
+WARNING guardrail_blocked code=prompt_injection
+```
+
+### Turning on Datadog
+
+Set `DD_API_KEY` in `.env` and restart the API. No Datadog Agent is needed. Each
+AI request then appears under **LLM Observability → Traces** in the
+`ai-vacation-planner` app as one trace:
+
+```
+/api/v1/agent ─► LangGraph ─► agent ─► ChatAnthropic (model, tokens) ─► tools ─► MCP tool call
+```
+
+The built-in **LLM Observability → Overview** dashboard charts latency, tokens,
+errors and models. Prompts and responses are sent to Datadog with these traces.
+
+`ddtrace`'s Anthropic integration is deliberately left off: `langchain-anthropic`
+reads the raw HTTP response, which hides token usage from it. The LangChain
+integration reports the LLM spans instead. As a result, the legacy `/itineraries/ask`
+route, which uses the Anthropic SDK directly, shows as a workflow span in Datadog
+and reports its tokens in the logs only.
+
+## LLM integration details (phase 7)
+
+| Capability | Model / service | Where |
+|------------|-----------------|-------|
+| Security rules | Added to every agent, research, draft and speech prompt | `app/agents/prompts.py` |
+| Agent, research, draft | Claude (`settings.LLM_MODEL`), reporting usage through a LangChain callback | `app/agents/llm.py` |
+| Evaluation judge | Claude (`settings.LLM_MODEL`), `temperature=0`, through `get_chat_model()` | `evals/judge.py` |
+| LLM tracing | `ddtrace` LLM Observability, agentless | `app/core/observability.py` |
+
+---
+
 # Setup Instructions
 
 ## Prerequisites
@@ -620,6 +803,12 @@ STT_MODEL=openai/whisper-base
 TTS_VOICE=en-US-AriaNeural
 MAX_AUDIO_MB=10
 MAX_IMAGE_MB=5
+
+# --- Observability (phase 7), optional ---
+DD_API_KEY=
+DD_SITE=datadoghq.com
+DD_ENV=dev
+DD_LLMOBS_ML_APP=ai-vacation-planner
 ```
 
 `ANTHROPIC_API_KEY` is the only credential the AI features need — the weather,
@@ -679,6 +868,9 @@ text-to-speech voices are keyless.
 | POST   | `/api/v1/multimodal/voice/trips`     | Create a trip from a voice recording (auth)        |
 | POST   | `/api/v1/multimodal/voice/chat`      | Spoken question in, spoken MP3 answer out          |
 | POST   | `/api/v1/multimodal/image/chat`      | Ask the agent about a photo                        |
+
+The agent, generation, `/ask` and multimodal endpoints return `400` when a
+guardrail blocks the request.
 
 ---
 
@@ -802,7 +994,14 @@ curl -X POST "http://localhost:8000/api/v1/itineraries/generate/<trip-uuid>" \
   "research": "WEATHER: ...\nPLACES: ...\nBUDGET: ...",
   "issues": [],
   "saved": true,
-  "error": null
+  "error": null,
+  "evaluation": {
+    "valid_format": true,
+    "complete": true,
+    "relevant": true,
+    "score": 1.0,
+    "problems": []
+  }
 }
 ```
 

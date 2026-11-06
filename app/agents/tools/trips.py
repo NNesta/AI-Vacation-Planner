@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.agents.guardrails import sanitize_untrusted
 from app.db.session import async_session_local
 from app.models.itinerary import Itinerary
 from app.models.trip import Trip
@@ -27,8 +28,8 @@ def _trip_to_dict(trip: Trip) -> dict:
     nights = (trip.end_datetime - trip.start_datetime).days
     return {
         "trip_id": str(trip.id),
-        "title": trip.title,
-        "description": trip.description,
+        "title": sanitize_untrusted(trip.title),
+        "description": sanitize_untrusted(trip.description),
         "destination": trip.destination,
         "start_date": trip.start_datetime.date().isoformat(),
         "end_date": trip.end_datetime.date().isoformat(),
